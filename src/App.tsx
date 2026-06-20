@@ -277,7 +277,7 @@ const Hero = () => (
         
         <div className="mb-10 pl-4 border-l-2 border-brand-primary/20">
           <p className="text-xl md:text-2xl font-serif text-[#b58b4c] italic tracking-tight leading-relaxed break-keep">
-            “외롭게 내린 결정들, <br className="hidden sm:inline" />
+            “온전히 나눌 수 없어 홀로 내린 결정들, <br className="hidden sm:inline" />
             얼마나 확신하고 계시나요?”
           </p>
         </div>

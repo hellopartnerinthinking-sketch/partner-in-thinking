@@ -74,7 +74,7 @@ export default function ProgramDetailPage({
         >
           <div className="max-w-4xl">
             <span className="text-xs uppercase tracking-[0.3em] text-brand-primary mb-3 block font-bold">Program Overview</span>
-            <h1 className="text-3xl md:text-5xl font-serif italic mb-6 text-brand-ink">나를 규정하는 사고를 마주하고 정렬하기</h1>
+            <h1 className="text-xl md:text-2xl font-serif italic mb-6 text-brand-ink">나를 규정하는 사고를 마주하고 정렬하기</h1>
             
             <div className="w-20 h-0.5 bg-brand-primary/40 mb-8"></div>
             
@@ -96,9 +96,35 @@ export default function ProgramDetailPage({
         {/* 2-Column Program Browser layout */}
         <div className="grid lg:grid-cols-12 gap-12 items-start">
           
-          {/* Left Navigation: Program Switcher (List of 6) */}
-          <div className="lg:col-span-4 space-y-3 sticky top-28">
-            <h3 className="text-xs uppercase tracking-widest text-brand-ink/50 font-bold px-4 mb-4">전체 프로그램 목차</h3>
+          {/* Mobile/Tablet Program Selector (Horizontal Scroll) - Visible only on < lg screens */}
+          <div className="lg:hidden mb-2">
+            <h3 className="text-xs uppercase tracking-widest text-brand-ink/50 font-bold px-1 mb-3">전체 프로그램 목차</h3>
+            <div className="flex gap-3 overflow-x-auto pb-4 snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-6 px-6">
+              {DETAILED_PROGRAMS.map((prog) => {
+                const isActive = prog.id === selectedProgramId;
+                return (
+                  <button
+                    key={prog.id}
+                    onClick={() => setSelectedProgramId(prog.id)}
+                    className={`snap-start shrink-0 text-left px-5 py-4 rounded-2xl border transition-all flex flex-col gap-1 cursor-pointer text-xs md:text-sm min-w-[240px] max-w-[280px] ${
+                      isActive 
+                        ? 'bg-brand-ink text-[#F5F2ED] border-brand-ink shadow-sm' 
+                        : 'bg-white text-brand-ink border-brand-ink/10 hover:border-brand-primary/40'
+                    }`}
+                  >
+                    <span className={`text-[9px] uppercase tracking-wider ${isActive ? 'text-brand-primary/80' : 'text-brand-ink/50'}`}>
+                      {prog.category === "Clarity" ? "Complexity to Clarity" : "Inner Order & Balance"}
+                    </span>
+                    <span className="font-bold tracking-tight truncate w-full">{prog.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Left Navigation: Program Switcher - Desktop only (visible on lg and above) */}
+          <div className="hidden lg:block lg:col-span-4 space-y-3 lg:sticky lg:top-28">
+            <h3 className="text-xs uppercase tracking-widest text-[#5e584f]/50 font-bold px-4 mb-4">전체 프로그램 목차</h3>
             <div className="space-y-2">
               {DETAILED_PROGRAMS.map((prog, idx) => {
                 const isActive = prog.id === selectedProgramId;
@@ -123,7 +149,7 @@ export default function ProgramDetailPage({
               })}
             </div>
 
-            <div className="bg-brand-ink/5 p-6 rounded-2xl border border-brand-ink/5 mt-8 hidden lg:block">
+            <div className="bg-brand-ink/5 p-6 rounded-2xl border border-brand-ink/5 mt-8">
               <h4 className="text-xs uppercase tracking-widest font-bold text-brand-ink mb-2">Tailoring Promise</h4>
               <p className="text-xs text-brand-ink/60 leading-relaxed break-keep mb-3">
                 모든 프로그램은 세션 수와 구성, 진로에 대한 맞춤 설계가 무제한 적용될 수 있습니다. 상담 단계를 지나 핵심 진단에 따르는 세심한 맞춤을 지원받으십시오.
