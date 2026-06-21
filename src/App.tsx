@@ -277,7 +277,7 @@ const Hero = () => (
         
         <div className="mb-10 pl-5 border-l border-brand-primary/30">
           <p className="text-lg md:text-xl font-serif text-[#ab8040] italic tracking-normal leading-relaxed break-keep">
-            “실력을 증명해야 하는 자리에서<br />
+            “성과로 증명해야 하는 자리에서<br />
             온전히 나눌 수 없어 홀로 내린 결정들.<br />
             과연 리더로서 얼마나 확신하고 계시나요?”
           </p>
