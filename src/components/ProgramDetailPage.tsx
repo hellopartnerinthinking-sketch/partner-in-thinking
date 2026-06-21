@@ -18,10 +18,22 @@ export default function ProgramDetailPage({
 }: ProgramDetailPageProps) {
   const [selectedProgramId, setSelectedProgramId] = React.useState(initialProgramId);
 
+  // Synchronize state when initialProgramId prop changes (e.g. browser back/forward buttons clicked)
+  useEffect(() => {
+    setSelectedProgramId(initialProgramId);
+  }, [initialProgramId]);
+
   // Smooth scroll to top on mount or program switch
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [selectedProgramId]);
+
+  const handleProgramSelect = (progId: string) => {
+    setSelectedProgramId(progId);
+    if (window.history.state?.isDetail) {
+      window.history.replaceState({ isDetail: true, programSlug: progId }, '', `#program-detail-${progId}`);
+    }
+  };
 
   const activeProg = DETAILED_PROGRAMS.find(p => p.id === selectedProgramId) || DETAILED_PROGRAMS[0];
 
@@ -105,7 +117,7 @@ export default function ProgramDetailPage({
                 return (
                   <button
                     key={prog.id}
-                    onClick={() => setSelectedProgramId(prog.id)}
+                    onClick={() => handleProgramSelect(prog.id)}
                     className={`snap-start shrink-0 text-left px-5 py-4 rounded-2xl border transition-all flex flex-col gap-1 cursor-pointer text-xs md:text-sm min-w-[240px] max-w-[280px] ${
                       isActive 
                         ? 'bg-brand-ink text-[#F5F2ED] border-brand-ink shadow-sm' 
@@ -131,7 +143,7 @@ export default function ProgramDetailPage({
                 return (
                   <button
                     key={prog.id}
-                    onClick={() => setSelectedProgramId(prog.id)}
+                    onClick={() => handleProgramSelect(prog.id)}
                     className={`w-full text-left px-5 py-4 rounded-2xl border transition-all flex items-center justify-between cursor-pointer group text-sm md:text-base ${
                       isActive 
                         ? 'bg-brand-ink text-[#F5F2ED] border-brand-ink shadow-sm' 

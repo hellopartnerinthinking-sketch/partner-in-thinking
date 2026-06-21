@@ -275,10 +275,11 @@ const Hero = () => (
           Complexity to clear next steps
         </h2>
         
-        <div className="mb-10 pl-4 border-l-2 border-brand-primary/20">
-          <p className="text-xl md:text-2xl font-serif text-[#b58b4c] italic tracking-tight leading-relaxed break-keep">
-            “온전히 나눌 수 없어 홀로 내린 결정들, <br className="hidden sm:inline" />
-            얼마나 확신하고 계시나요?”
+        <div className="mb-10 pl-5 border-l border-brand-primary/30">
+          <p className="text-lg md:text-xl font-serif text-[#ab8040] italic tracking-normal leading-relaxed break-keep">
+            “실력을 증명해야 하는 자리에서<br />
+            온전히 나눌 수 없어 홀로 내린 결정들.<br />
+            과연 리더로서 얼마나 확신하고 계시나요?”
           </p>
         </div>
         
@@ -297,7 +298,7 @@ const Hero = () => (
             href="#contact" 
             className="bg-brand-primary text-white px-10 py-4 rounded-full flex items-center gap-3 hover:opacity-90 transition-all duration-300 text-lg font-medium shadow-lg shadow-brand-primary/20"
           >
-            Start a Conversation <ArrowRight size={20} />
+            Connect with Your Thinking Partner <ArrowRight size={20} />
           </a>
         </div>
       </motion.div>
@@ -1361,8 +1362,27 @@ export default function App() {
   const [activeProgramDetail, setActiveProgramDetail] = useState<string | null>(null);
   const [selectedContactProgram, setSelectedContactProgram] = useState<string>('');
 
-  const handleNavigateSection = (sectionId: string, preselectedProgram?: string) => {
+  const handleSelectProgramDetail = (slug: string) => {
+    setActiveProgramDetail(slug);
+    if (!window.history.state || window.history.state.programSlug !== slug) {
+      window.history.pushState({ isDetail: true, programSlug: slug }, '', `#program-detail-${slug}`);
+    }
+  };
+
+  const handleCloseProgramDetail = () => {
     setActiveProgramDetail(null);
+    if (window.history.state?.isDetail) {
+      window.history.back();
+    }
+  };
+
+  const handleNavigateSection = (sectionId: string, preselectedProgram?: string) => {
+    if (activeProgramDetail) {
+      setActiveProgramDetail(null);
+      if (window.history.state?.isDetail) {
+        window.history.back();
+      }
+    }
     if (preselectedProgram) {
       setSelectedContactProgram(preselectedProgram);
     }
@@ -1379,6 +1399,33 @@ export default function App() {
       }
     }, 150);
   };
+
+  // Sync deep link on initialization or tab refresh/navigation & popstate
+  useEffect(() => {
+    const checkHashOnLoad = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#program-detail-')) {
+        const slug = hash.replace('#program-detail-', '');
+        setActiveProgramDetail(slug);
+        if (!window.history.state || window.history.state.programSlug !== slug) {
+          window.history.replaceState({ isDetail: true, programSlug: slug }, '', hash);
+        }
+      }
+    };
+
+    checkHashOnLoad();
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && event.state.isDetail) {
+        setActiveProgramDetail(event.state.programSlug || null);
+      } else {
+        setActiveProgramDetail(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const isAdmin = user?.email === 'wonyoung.park@gmail.com';
 
@@ -1443,7 +1490,7 @@ export default function App() {
         {activeProgramDetail ? (
           <ProgramDetailPage 
             initialProgramId={activeProgramDetail} 
-            onClose={() => setActiveProgramDetail(null)} 
+            onClose={handleCloseProgramDetail} 
             onNavigateSection={handleNavigateSection} 
           />
         ) : (
@@ -1451,7 +1498,7 @@ export default function App() {
             <Hero />
             <About />
             <Credentials credentials={credentials} />
-            <Program onSelectProgramDetail={setActiveProgramDetail} />
+            <Program onSelectProgramDetail={handleSelectProgramDetail} />
             <Insights posts={posts.length > 0 ? posts : (SEED_POSTS as Post[]).slice(0, 6)} />
             <Contact key={selectedContactProgram} initialProgram={selectedContactProgram} />
           </main>
