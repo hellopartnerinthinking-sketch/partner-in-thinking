@@ -36,6 +36,7 @@ export default function ProgramDetailPage({
   };
 
   const activeProg = DETAILED_PROGRAMS.find(p => p.id === selectedProgramId) || DETAILED_PROGRAMS[0];
+  const isGroupA = ["focus-alignment", "critical-framing", "organizational-politics"].includes(activeProg.id);
 
   const handleApplyClick = () => {
     // Map the selected program ID back to the value expected in the select input
@@ -279,22 +280,67 @@ export default function ProgramDetailPage({
                   </div>
 
                   {/* Application Anchor Card */}
-                  <div className="p-8 rounded-2xl bg-brand-ink text-[#F5F2ED] text-center space-y-6 mt-6">
-                    <div className="max-w-lg mx-auto space-y-2">
-                      <h4 className="text-xl font-bold tracking-tight">이 프로그램에 대해 상담을 받아보시겠습니까?</h4>
-                      <p className="text-xs text-[#F5F2ED]/60 leading-relaxed break-keep">
-                        현재 풀고 계시는 고민이나 지향하시는 리더십 이슈에 맞춰 상세 일정을 조율해 드립니다. <br />
-                        아래 버튼을 선택하면 문의 작성 폼으로 자동 이동하며 프로그램명이 자동 지정됩니다.
-                      </p>
+                  {isGroupA ? (
+                    <div className="p-8 rounded-2xl bg-brand-ink text-[#F5F2ED] text-center space-y-6 mt-6">
+                      <div className="max-w-2xl mx-auto space-y-4">
+                        <h4 className="text-xl font-bold tracking-tight">이 프로그램으로 사유의 여정을 시작하시겠습니까?</h4>
+                        <div className="text-xs text-[#F5F2ED]/70 leading-relaxed break-keep space-y-3">
+                          <p>본 프로그램은 네이버 스마트스토어를 통해 안전하고 간편하게 신청하실 수 있습니다.</p>
+                          <p>아래 버튼을 선택하시면 '리더 전용 생각 정리 세션' 결제 페이지로 연결되며, 필요하신 회차를 선택해 결제를 진행해 주시면 됩니다.</p>
+                          <p className="text-[#b58b4c] font-medium pt-1">
+                            제시된 커리큘럼은 설계 예시이며, 신청 확인 후 리더님의 비즈니스 맥락에 맞춘 첫 세션 일정 조율을 위해 연락을 드립니다.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
+                        <a 
+                          href="https://smartstore.naver.com/partnerinthinking/products/13647739355"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/95 text-white font-bold px-8 py-3.5 rounded-sm text-sm transition-all shadow-md cursor-pointer"
+                        >
+                          ➔ 프로그램 신청하기
+                        </a>
+                        <button 
+                          onClick={handleApplyClick}
+                          className="inline-flex items-center gap-2 bg-transparent hover:bg-white/10 text-[#F5F2ED] border border-[#F5F2ED]/25 font-bold px-8 py-3.5 rounded-sm text-sm transition-all cursor-pointer"
+                        >
+                          <MessageSquare size={16} />
+                          문의 및 상담하기
+                        </button>
+                      </div>
                     </div>
-                    <button 
-                      onClick={handleApplyClick}
-                      className="inline-flex items-center gap-2 bg-[#F5F2ED] hover:bg-[#F5F2ED]/90 text-brand-ink font-bold px-8 py-3.5 rounded-sm text-sm transition-all focus:ring-2 focus:ring-[#F5F2ED]/50 cursor-pointer shadow-md"
-                    >
-                      <MessageSquare size={16} />
-                      프로그램 상담 및 신청하기
-                    </button>
-                  </div>
+                  ) : (
+                    <div className="p-8 rounded-2xl bg-brand-ink text-[#F5F2ED] text-center space-y-6 mt-6">
+                      <div className="max-w-2xl mx-auto space-y-4">
+                        <h4 className="text-xl font-bold tracking-tight">이 프로그램으로 사유의 여정을 시작하시겠습니까?</h4>
+                        <div className="text-xs text-[#F5F2ED]/70 leading-relaxed break-keep space-y-3">
+                          <p>본 프로그램은 네이버 스마트스토어를 통해 안전하고 간편하게 신청하실 수 있습니다.</p>
+                          <p>아래 버튼을 선택하시면 '1:1 개인 생각 정리 세션' 결제 페이지로 연결되며, 필요하신 회차를 선택해 결제를 진행해 주시면 됩니다.</p>
+                          <p className="text-[#b58b4c] font-medium pt-1">
+                            제시된 커리큘럼은 설계 예시이며, 신청 확인 후 마주하신 고민과 상황에 맞춘 첫 세션 일정 조율을 위해 연락을 드립니다.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
+                        <a 
+                          href="https://smartstore.naver.com/partnerinthinking/products/13652713745"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/95 text-white font-bold px-8 py-3.5 rounded-sm text-sm transition-all shadow-md cursor-pointer"
+                        >
+                          ➔ 프로그램 신청하기
+                        </a>
+                        <button 
+                          onClick={handleApplyClick}
+                          className="inline-flex items-center gap-2 bg-transparent hover:bg-white/10 text-[#F5F2ED] border border-[#F5F2ED]/25 font-bold px-8 py-3.5 rounded-sm text-sm transition-all cursor-pointer"
+                        >
+                          <MessageSquare size={16} />
+                          문의 및 상담하기
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                 </div>
               </motion.div>

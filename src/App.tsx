@@ -561,7 +561,7 @@ const Program = ({ onSelectProgramDetail }: { onSelectProgramDetail: (slug: stri
                               }}
                               className="inline-block bg-brand-ink/80 hover:bg-[#5A5A40] text-white px-6 py-2.5 text-sm font-bold transition-colors rounded-sm cursor-pointer"
                             >
-                              프로그램 상세 및 신청
+                              프로그램 상세보기
                             </button>
                           </div>
                         </div>
