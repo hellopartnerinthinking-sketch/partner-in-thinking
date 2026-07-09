@@ -52,7 +52,7 @@ export default function ProgramDetailPage({
   };
 
   return (
-    <div id="top" className="min-h-screen bg-[#F5F2ED] text-brand-ink selection:bg-brand-primary selection:text-white overflow-x-hidden">
+    <div id="top" className="min-h-screen bg-[#F5F2ED] text-brand-ink selection:bg-brand-primary selection:text-white">
       {/* Visual Header / Sub-Nav consistent with theme */}
       <div className="border-b border-brand-ink/10 bg-[#F5F2ED]/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 h-20 flex justify-between items-center">
@@ -110,16 +110,16 @@ export default function ProgramDetailPage({
         <div className="grid lg:grid-cols-12 gap-12 items-start">
           
           {/* Mobile/Tablet Program Selector (Horizontal Scroll) - Visible only on < lg screens */}
-          <div className="lg:hidden mb-4">
-            <h3 className="text-xs uppercase tracking-widest text-brand-ink/50 font-bold px-1 mb-3">전체 프로그램 목차</h3>
-            <div className="flex gap-3 overflow-x-auto pb-4 snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-6 px-6">
+          <div className="lg:hidden mb-4 overflow-hidden -mx-6">
+            <h3 className="text-xs uppercase tracking-widest text-brand-ink/50 font-bold px-7 mb-3">전체 프로그램 목차</h3>
+            <div className="flex gap-3 overflow-x-auto pb-4 custom-scrollbar px-7">
               {DETAILED_PROGRAMS.map((prog) => {
                 const isActive = prog.id === selectedProgramId;
                 return (
                   <button
                     key={prog.id}
                     onClick={() => handleProgramSelect(prog.id)}
-                    className={`snap-start shrink-0 text-left px-4 py-3 sm:px-5 sm:py-4 rounded-xl border transition-all flex flex-col gap-1 cursor-pointer text-xs sm:text-sm min-w-[200px] max-w-[240px] sm:min-w-[240px] sm:max-w-[280px] ${
+                    className={`shrink-0 text-left px-4 py-3 sm:px-5 sm:py-4 rounded-xl border transition-all flex flex-col gap-1 cursor-pointer text-xs sm:text-sm min-w-[200px] max-w-[240px] sm:min-w-[240px] sm:max-w-[280px] ${
                       isActive 
                         ? 'bg-brand-ink text-[#F5F2ED] border-brand-ink shadow-md scale-[0.98]' 
                         : 'bg-white text-brand-ink border-brand-ink/10 hover:border-brand-primary/40'

@@ -32,3 +32,30 @@
 .markdown-body ol { @apply list-decimal ml-6 mb-4; }
 .markdown-body blockquote { @apply border-l-4 border-brand-primary pl-4 italic my-4; }
 
+/* Custom elegant visible scrollbar */
+.custom-scrollbar {
+  scrollbar-width: auto;
+  scrollbar-color: rgba(90, 90, 64, 0.3) rgba(26, 26, 26, 0.05);
+  -webkit-overflow-scrolling: touch;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 5px;
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(26, 26, 26, 0.05);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(90, 90, 64, 0.35);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(90, 90, 64, 0.5);
+}
+
+
