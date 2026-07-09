@@ -1479,13 +1479,15 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div className="relative">
-        <Navbar 
-          isAdmin={isAdmin} 
-          user={user} 
-          onLogin={login} 
-          onLogout={logout} 
-          onNavigateSection={handleNavigateSection} 
-        />
+        {!activeProgramDetail && (
+          <Navbar 
+            isAdmin={isAdmin} 
+            user={user} 
+            onLogin={login} 
+            onLogout={logout} 
+            onNavigateSection={handleNavigateSection} 
+          />
+        )}
         
         {activeProgramDetail ? (
           <ProgramDetailPage 

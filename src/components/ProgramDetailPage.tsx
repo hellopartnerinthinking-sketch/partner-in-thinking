@@ -52,7 +52,7 @@ export default function ProgramDetailPage({
   };
 
   return (
-    <div id="top" className="min-h-screen bg-[#F5F2ED] text-brand-ink selection:bg-brand-primary selection:text-white">
+    <div id="top" className="min-h-screen bg-[#F5F2ED] text-brand-ink selection:bg-brand-primary selection:text-white overflow-x-hidden">
       {/* Visual Header / Sub-Nav consistent with theme */}
       <div className="border-b border-brand-ink/10 bg-[#F5F2ED]/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 h-20 flex justify-between items-center">
@@ -83,15 +83,15 @@ export default function ProgramDetailPage({
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="bg-white rounded-3xl p-8 md:p-12 mb-16 shadow-xs border border-brand-ink/5"
+          className="bg-white rounded-3xl p-5 sm:p-8 md:p-12 mb-10 md:mb-16 shadow-xs border border-brand-ink/5 max-w-5xl mx-auto"
         >
-          <div className="max-w-4xl">
+          <div className="max-w-3xl">
             <span className="text-xs uppercase tracking-[0.3em] text-brand-primary mb-3 block font-bold">Program Overview</span>
-            <h1 className="text-xl md:text-2xl font-serif italic mb-6 text-brand-ink">나를 규정하는 사고를 마주하고 정렬하기</h1>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-serif italic mb-4 md:mb-6 text-brand-ink">나를 규정하는 사고를 마주하고 정렬하기</h1>
             
-            <div className="w-20 h-0.5 bg-brand-primary/40 mb-8"></div>
+            <div className="w-16 md:w-20 h-0.5 bg-brand-primary/40 mb-6 md:mb-8"></div>
             
-            <div className="space-y-4 text-brand-ink/80 text-base md:text-lg leading-relaxed break-keep">
+            <div className="space-y-4 text-brand-ink/80 text-sm sm:text-base md:text-lg leading-relaxed break-keep">
               <p className="font-semibold text-brand-ink">
                 제시된 커리큘럼은 많은 리더들이 겪는 어려움에 기반한 예시 프로그램 제안입니다.
               </p>
@@ -110,7 +110,7 @@ export default function ProgramDetailPage({
         <div className="grid lg:grid-cols-12 gap-12 items-start">
           
           {/* Mobile/Tablet Program Selector (Horizontal Scroll) - Visible only on < lg screens */}
-          <div className="lg:hidden mb-2">
+          <div className="lg:hidden mb-4">
             <h3 className="text-xs uppercase tracking-widest text-brand-ink/50 font-bold px-1 mb-3">전체 프로그램 목차</h3>
             <div className="flex gap-3 overflow-x-auto pb-4 snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-6 px-6">
               {DETAILED_PROGRAMS.map((prog) => {
@@ -119,9 +119,9 @@ export default function ProgramDetailPage({
                   <button
                     key={prog.id}
                     onClick={() => handleProgramSelect(prog.id)}
-                    className={`snap-start shrink-0 text-left px-5 py-4 rounded-2xl border transition-all flex flex-col gap-1 cursor-pointer text-xs md:text-sm min-w-[240px] max-w-[280px] ${
+                    className={`snap-start shrink-0 text-left px-4 py-3 sm:px-5 sm:py-4 rounded-xl border transition-all flex flex-col gap-1 cursor-pointer text-xs sm:text-sm min-w-[200px] max-w-[240px] sm:min-w-[240px] sm:max-w-[280px] ${
                       isActive 
-                        ? 'bg-brand-ink text-[#F5F2ED] border-brand-ink shadow-sm' 
+                        ? 'bg-brand-ink text-[#F5F2ED] border-brand-ink shadow-md scale-[0.98]' 
                         : 'bg-white text-brand-ink border-brand-ink/10 hover:border-brand-primary/40'
                     }`}
                   >
@@ -174,7 +174,7 @@ export default function ProgramDetailPage({
           </div>
 
           {/* Right Area: Dynamic Program Content */}
-          <div className="lg:col-span-8">
+          <div className="lg:col-span-8 max-w-3xl">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeProg.id}
@@ -185,7 +185,7 @@ export default function ProgramDetailPage({
                 className="bg-white rounded-3xl overflow-hidden shadow-xs border border-brand-ink/5"
               >
                 {/* Banner Image */}
-                <div className="h-64 md:h-80 relative overflow-hidden">
+                <div className="h-48 sm:h-64 md:h-80 relative overflow-hidden">
                   <img 
                     src={activeProg.image} 
                     alt={activeProg.title} 
@@ -194,44 +194,44 @@ export default function ProgramDetailPage({
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-brand-ink via-brand-ink/40 to-transparent"></div>
                   
-                  <div className="absolute bottom-8 left-8 right-8 text-[#F5F2ED]">
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className="text-xs uppercase tracking-[0.2em] bg-brand-primary text-white font-bold px-3 py-1 rounded-sm">
+                  <div className="absolute bottom-5 left-5 right-5 sm:bottom-8 sm:left-8 sm:right-8 text-[#F5F2ED]">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2">
+                      <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] bg-brand-primary text-white font-bold px-2 py-0.5 sm:px-3 sm:py-1 rounded-sm">
                         {activeProg.category === "Clarity" ? "Clarity Line" : "Balance Line"}
                       </span>
-                      <span className="text-xs font-bold bg-[#b58b4c] text-white px-3 py-1 rounded-sm">
+                      <span className="text-[10px] sm:text-xs font-bold bg-[#b58b4c] text-white px-2 py-0.5 sm:px-3 sm:py-1 rounded-sm">
                         {activeProg.sessionsCount}
                       </span>
-                      <span className="text-xs font-bold bg-white/20 text-[#F5F2ED] backdrop-blur-xs px-3 py-1 rounded-sm">
+                      <span className="text-[10px] sm:text-xs font-bold bg-white/20 text-[#F5F2ED] backdrop-blur-xs px-2 py-0.5 sm:px-3 sm:py-1 rounded-sm">
                         {activeProg.totalDuration}
                       </span>
                     </div>
-                    <h2 className="text-2xl md:text-4xl font-serif font-bold italic tracking-tight">{activeProg.title}</h2>
+                    <h2 className="text-lg sm:text-2xl md:text-4xl font-serif font-bold italic tracking-tight">{activeProg.title}</h2>
                   </div>
                 </div>
 
-                <div className="p-8 md:p-12 space-y-12">
+                <div className="p-5 sm:p-8 md:p-12 space-y-8 sm:space-y-12">
                   {/* Detailed Description */}
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4 max-w-2xl">
                     <h3 className="text-xs uppercase tracking-[0.2em] text-brand-primary font-bold">About Program</h3>
-                    <p className="text-lg font-bold text-brand-ink leading-snug break-keep">
+                    <p className="text-base sm:text-lg font-bold text-brand-ink leading-snug break-keep">
                       "{activeProg.shortSummary}"
                     </p>
-                    <p className="text-brand-ink/75 text-base leading-relaxed break-keep whitespace-pre-line pt-2">
+                    <p className="text-brand-ink/75 text-sm sm:text-base leading-relaxed break-keep whitespace-pre-line pt-1 sm:pt-2">
                       {activeProg.fullDescription}
                     </p>
                   </div>
 
                   {/* Tailoring & Custom Rules Box */}
-                  <div className="bg-[#F5F2ED] rounded-2xl p-6 md:p-8 space-y-4 border border-brand-ink/5">
+                  <div className="bg-[#F5F2ED] rounded-2xl p-4 sm:p-6 md:p-8 space-y-3 sm:space-y-4 border border-brand-ink/5 max-w-2xl">
                     <div className="flex items-center gap-2 text-brand-primary">
-                      <Settings size={18} />
+                      <Settings size={16} className="sm:w-[18px] sm:h-[18px]" />
                       <h4 className="text-xs uppercase tracking-widest font-bold">1:1 맞춤화 및 조율 규칙 (Agile Tailoring)</h4>
                     </div>
-                    <ul className="space-y-3">
+                    <ul className="space-y-2 sm:space-y-3">
                       {activeProg.tailoringNotes.map((note, noteIdx) => (
-                        <li key={noteIdx} className="flex gap-2.5 text-sm text-brand-ink/85 leading-relaxed break-keep">
-                          <CheckCircle2 size={16} className="text-brand-primary shrink-0 mt-0.5" />
+                        <li key={noteIdx} className="flex gap-2 sm:gap-2.5 text-xs sm:text-sm text-brand-ink/85 leading-relaxed break-keep">
+                          <CheckCircle2 size={14} className="text-brand-primary shrink-0 mt-0.5 sm:w-4 sm:h-4" />
                           <span>{note}</span>
                         </li>
                       ))}
@@ -239,38 +239,38 @@ export default function ProgramDetailPage({
                   </div>
 
                   {/* Curriculum Timeline */}
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8 max-w-2xl">
                     <div className="flex justify-between items-center pb-2 border-b border-brand-ink/10">
                       <h3 className="text-xs uppercase tracking-[0.2em] text-brand-primary font-bold">Curriculum & Flow</h3>
                       <span className="text-xs text-brand-ink/50 font-medium">세션별 상세 정보</span>
                     </div>
 
-                    <div className="space-y-8 relative before:absolute before:inset-y-0 before:left-6 before:w-0.5 before:bg-brand-ink/5">
+                    <div className="space-y-6 sm:space-y-8 relative before:absolute before:inset-y-0 before:left-4 sm:before:left-6 before:w-0.5 before:bg-brand-ink/5">
                       {activeProg.sessions.map((session, sIdx) => (
-                        <div key={sIdx} className="relative pl-12 group">
+                        <div key={sIdx} className="relative pl-8 sm:pl-12 group">
                           {/* Dot accent on timeline */}
-                          <div className="absolute left-4 top-1 w-4 h-4 rounded-full border-2 border-brand-primary bg-white z-10 transition-transform group-hover:scale-125"></div>
+                          <div className="absolute left-2 sm:left-4 top-1 w-4 h-4 rounded-full border-2 border-brand-primary bg-white z-10 transition-transform group-hover:scale-125"></div>
                           
                           <div className="space-y-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-xs font-bold text-brand-primary bg-brand-primary/10 px-2 py-0.5 rounded-sm">
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                              <span className="text-[10px] sm:text-xs font-bold text-brand-primary bg-brand-primary/10 px-2 py-0.5 rounded-sm">
                                 {session.sessionNum}
                               </span>
-                              <span className="text-xs font-semibold text-brand-ink/60 flex items-center gap-1 bg-brand-ink/5 px-2 py-0.5 rounded-sm">
-                                <Clock size={12} /> {session.duration}
+                              <span className="text-[10px] sm:text-xs font-semibold text-brand-ink/60 flex items-center gap-1 bg-brand-ink/5 px-2 py-0.5 rounded-sm">
+                                <Clock size={11} /> {session.duration}
                               </span>
                               {session.recommendation && (
-                                <span className="text-[10px] font-bold text-[#b58b4c] border border-[#b58b4c]/30 px-2 py-0.5 rounded-sm flex items-center gap-1 bg-[#b58b4c]/5">
-                                  {session.recommendation === "Offline 추천" ? <MapPin size={10} /> : <Award size={10} />}
+                                <span className="text-[9px] sm:text-[10px] font-bold text-[#b58b4c] border border-[#b58b4c]/30 px-2 py-0.5 rounded-sm flex items-center gap-1 bg-[#b58b4c]/5">
+                                  {session.recommendation === "Offline 추천" ? <MapPin size={9} /> : <Award size={9} />}
                                   {session.recommendation}
                                 </span>
                               )}
                             </div>
                             
-                            <h4 className="text-base font-bold text-brand-ink tracking-tight group-hover:text-brand-primary transition-colors">
+                            <h4 className="text-sm sm:text-base font-bold text-brand-ink tracking-tight group-hover:text-brand-primary transition-colors">
                               {session.title}
                             </h4>
-                            <p className="text-sm text-brand-ink/70 leading-relaxed break-keep">
+                            <p className="text-xs sm:text-sm text-brand-ink/70 leading-relaxed break-keep">
                               {session.description}
                             </p>
                           </div>
@@ -281,10 +281,10 @@ export default function ProgramDetailPage({
 
                   {/* Application Anchor Card */}
                   {isGroupA ? (
-                    <div className="p-8 rounded-2xl bg-brand-ink text-[#F5F2ED] text-center space-y-6 mt-6">
-                      <div className="max-w-2xl mx-auto space-y-4">
-                        <h4 className="text-xl font-bold tracking-tight">이 프로그램으로 사유의 여정을 시작하시겠습니까?</h4>
-                        <div className="text-xs text-[#F5F2ED]/70 leading-relaxed break-keep space-y-3">
+                    <div className="p-5 sm:p-8 rounded-2xl bg-brand-ink text-[#F5F2ED] text-center space-y-5 sm:space-y-6 mt-6 max-w-2xl mx-auto">
+                      <div className="max-w-xl mx-auto space-y-3 sm:space-y-4">
+                        <h4 className="text-lg sm:text-xl font-bold tracking-tight">이 프로그램으로 사유의 여정을 시작하시겠습니까?</h4>
+                        <div className="text-[11px] sm:text-xs text-[#F5F2ED]/70 leading-relaxed break-keep space-y-2.5 sm:space-y-3">
                           <p>본 프로그램은 네이버 스마트스토어를 통해 안전하고 간편하게 신청하실 수 있습니다.</p>
                           <p>아래 버튼을 선택하시면 '리더 전용 생각 정리 세션' 결제 페이지로 연결되며, 필요하신 회차를 선택해 결제를 진행해 주시면 됩니다.</p>
                           <p className="text-[#b58b4c] font-medium pt-1">
@@ -292,29 +292,29 @@ export default function ProgramDetailPage({
                           </p>
                         </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
+                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center pt-2 w-full max-w-sm sm:max-w-none mx-auto">
                         <a 
                           href="https://smartstore.naver.com/partnerinthinking/products/13647739355"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/95 text-white font-bold px-8 py-3.5 rounded-sm text-sm transition-all shadow-md cursor-pointer"
+                          className="w-full sm:w-auto max-w-[260px] sm:max-w-none inline-flex items-center justify-center gap-2 bg-brand-primary hover:bg-brand-primary/95 text-white font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-sm text-xs sm:text-sm transition-all shadow-md cursor-pointer"
                         >
                           ➔ 프로그램 신청하기
                         </a>
                         <button 
                           onClick={handleApplyClick}
-                          className="inline-flex items-center gap-2 bg-transparent hover:bg-white/10 text-[#F5F2ED] border border-[#F5F2ED]/25 font-bold px-8 py-3.5 rounded-sm text-sm transition-all cursor-pointer"
+                          className="w-full sm:w-auto max-w-[260px] sm:max-w-none inline-flex items-center justify-center gap-2 bg-transparent hover:bg-white/10 text-[#F5F2ED] border border-[#F5F2ED]/25 font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-sm text-xs sm:text-sm transition-all cursor-pointer"
                         >
-                          <MessageSquare size={16} />
+                          <MessageSquare size={14} className="sm:w-4 sm:h-4" />
                           문의 및 상담하기
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <div className="p-8 rounded-2xl bg-brand-ink text-[#F5F2ED] text-center space-y-6 mt-6">
-                      <div className="max-w-2xl mx-auto space-y-4">
-                        <h4 className="text-xl font-bold tracking-tight">이 프로그램으로 사유의 여정을 시작하시겠습니까?</h4>
-                        <div className="text-xs text-[#F5F2ED]/70 leading-relaxed break-keep space-y-3">
+                    <div className="p-5 sm:p-8 rounded-2xl bg-brand-ink text-[#F5F2ED] text-center space-y-5 sm:space-y-6 mt-6 max-w-2xl mx-auto">
+                      <div className="max-w-xl mx-auto space-y-3 sm:space-y-4">
+                        <h4 className="text-lg sm:text-xl font-bold tracking-tight">이 프로그램으로 사유의 여정을 시작하시겠습니까?</h4>
+                        <div className="text-[11px] sm:text-xs text-[#F5F2ED]/70 leading-relaxed break-keep space-y-2.5 sm:space-y-3">
                           <p>본 프로그램은 네이버 스마트스토어를 통해 안전하고 간편하게 신청하실 수 있습니다.</p>
                           <p>아래 버튼을 선택하시면 '1:1 개인 생각 정리 세션' 결제 페이지로 연결되며, 필요하신 회차를 선택해 결제를 진행해 주시면 됩니다.</p>
                           <p className="text-[#b58b4c] font-medium pt-1">
@@ -322,20 +322,20 @@ export default function ProgramDetailPage({
                           </p>
                         </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
+                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center pt-2 w-full max-w-sm sm:max-w-none mx-auto">
                         <a 
                           href="https://smartstore.naver.com/partnerinthinking/products/13652713745"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/95 text-white font-bold px-8 py-3.5 rounded-sm text-sm transition-all shadow-md cursor-pointer"
+                          className="w-full sm:w-auto max-w-[260px] sm:max-w-none inline-flex items-center justify-center gap-2 bg-brand-primary hover:bg-brand-primary/95 text-white font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-sm text-xs sm:text-sm transition-all shadow-md cursor-pointer"
                         >
                           ➔ 프로그램 신청하기
                         </a>
                         <button 
                           onClick={handleApplyClick}
-                          className="inline-flex items-center gap-2 bg-transparent hover:bg-white/10 text-[#F5F2ED] border border-[#F5F2ED]/25 font-bold px-8 py-3.5 rounded-sm text-sm transition-all cursor-pointer"
+                          className="w-full sm:w-auto max-w-[260px] sm:max-w-none inline-flex items-center justify-center gap-2 bg-transparent hover:bg-white/10 text-[#F5F2ED] border border-[#F5F2ED]/25 font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-sm text-xs sm:text-sm transition-all cursor-pointer"
                         >
-                          <MessageSquare size={16} />
+                          <MessageSquare size={14} className="sm:w-4 sm:h-4" />
                           문의 및 상담하기
                         </button>
                       </div>
