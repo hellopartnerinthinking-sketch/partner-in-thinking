@@ -941,7 +941,7 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
     <section id="contact" className="py-20 md:py-32 bg-brand-bg/50">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         <motion.div 
-          className="bg-white rounded-[40px] md:rounded-[60px] p-8 md:p-12 lg:p-20 shadow-2xl shadow-black/5 grid lg:grid-cols-2 gap-x-16 lg:gap-x-24 gap-y-12 lg:gap-y-0"
+          className="bg-white rounded-[40px] md:rounded-[60px] p-6 sm:p-8 md:p-12 lg:p-20 shadow-2xl shadow-black/5 grid lg:grid-cols-2 gap-x-16 lg:gap-x-24 gap-y-12 lg:gap-y-0"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -949,27 +949,27 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
         >
           <div className="lg:col-span-1">
             <p className="text-xs md:text-sm uppercase tracking-[0.3em] font-sans text-brand-ink/50 mb-4">Complexity to clear next steps.</p>
-            <h2 className="text-3xl md:text-4xl font-serif italic font-bold mb-12 tracking-tight leading-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif italic font-bold mb-8 sm:mb-12 tracking-tight leading-tight">
               Start Your <br />
-              <span className="inline-block ml-8 md:ml-12">Thinking Journey</span>
+              <span className="inline-block ml-4 sm:ml-8 md:ml-12">Thinking Journey</span>
             </h2>
           </div>
 
           <div className="hidden lg:block"></div>
 
           <div className="lg:col-span-1">
-            <div className="text-lg md:text-xl font-sans text-brand-ink/70 leading-relaxed mb-12 space-y-1">
+            <div className="text-base sm:text-lg md:text-xl font-sans text-brand-ink/70 leading-relaxed mb-8 sm:mb-12 space-y-1">
               <p>막연한 고민이 선명한 액션 플랜이 되는 시간.</p>
               <p>당신의 사고 파트너와 함께</p>
               <p>새로운 변화를 설계해 보세요.</p>
             </div>
 
             <div className="space-y-6">
-              <a href="mailto:Contact@partnerinthinking.com" className="flex items-center gap-5 group">
-                <div className="w-12 h-12 rounded-full bg-brand-bg flex items-center justify-center group-hover:bg-brand-primary/10 transition-all duration-300">
+              <a href="mailto:Contact@partnerinthinking.com" className="flex items-center gap-3 sm:gap-5 group w-full overflow-hidden">
+                <div className="shrink-0 w-12 h-12 rounded-full bg-brand-bg flex items-center justify-center group-hover:bg-brand-primary/10 transition-all duration-300">
                   <Mail size={20} className="text-brand-primary" />
                 </div>
-                <span className="text-lg font-sans text-brand-ink/80 group-hover:text-brand-primary transition-colors">
+                <span className="text-sm sm:text-base md:text-lg font-sans text-brand-ink/80 group-hover:text-brand-primary transition-colors break-all">
                   Contact@partnerinthinking.com
                 </span>
               </a>
