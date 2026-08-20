@@ -124,24 +124,31 @@ const SEED_CREDS: Partial<Credential>[] = [
     description: "코칭 방법론에 대한 기초적인 전문성과 전문적인 윤리 기준에 대한 엄격한 준수를 입증합니다."
   },
   { 
+    title: "Certified Birkman® (The Birkman Method)", 
+    organization: "Birkman International", 
+    year: "Certified", 
+    order: 4,
+    description: "다면적 행동 특성, 내적 동기 및 스트레스 반응을 진단하여 자기 이해와 대인관계 효율성을 극대화합니다."
+  },
+  { 
     title: "Certified TKI® (Thomas-Kilmann Conflict Mode Instrument)", 
     organization: "Certified", 
     year: "Certified", 
-    order: 4,
+    order: 5,
     description: "갈등 상황에서 반복되는 사고와 감정의 패턴을 분석하여 효과적인 대응 전략을 수립합니다."
   },
   { 
     title: "Certified FIRO-B® (Fundamental Interpersonal Relations Orientation – Behavior)", 
     organization: "Certified", 
     year: "Certified", 
-    order: 5,
+    order: 6,
     description: "관계 속에서 형성된 사고 구조와 대인 관계 욕구를 파악하여 조직 내 협업과 소통을 개선합니다."
   },
   { 
     title: "Certified Problem Solving Process Advanced Practitioner", 
     organization: "Strategic Methodology", 
     year: "Certified", 
-    order: 6,
+    order: 7,
     description: "구조화된 프레임워크를 마스터하여 복잡한 조직의 과제를 분석하고 실행 가능한 전략적 솔루션을 도출합니다."
   }
 ];
@@ -758,6 +765,11 @@ const Credentials = ({ credentials }: { credentials: Credential[] }) => {
   const coreCertification = [
     {
       title: "Certified Associate Coach (KAC)",
+      organization: "",
+      description: ""
+    },
+    {
+      title: "Certified Birkman® (The Birkman Method)",
       organization: "",
       description: ""
     },
