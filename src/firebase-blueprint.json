@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "Post": {
+      "title": "Blog Post",
+      "description": "A thinking piece or insight shared by the partner.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the post" },
+        "content": { "type": "string", "description": "Markdown content of the post" },
+        "excerpt": { "type": "string", "description": "Short summary for the list view" },
+        "category": { "type": "string", "description": "Category like Leadership, Strategy, etc." },
+        "imageUrl": { "type": "string", "description": "Header image URL" },
+        "publishedAt": { "type": "string", "format": "date-time", "description": "Publication date" },
+        "slug": { "type": "string", "description": "URL friendly identifier" }
+      },
+      "required": ["title", "content", "publishedAt", "slug"]
+    },
+    "Credential": {
+      "title": "Professional Credential",
+      "description": "A certification, degree, or professional achievement.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "organization": { "type": "string" },
+        "year": { "type": "string" },
+        "order": { "type": "number" }
+      },
+      "required": ["title", "organization"]
+    },
+    "ContactMessage": {
+      "title": "Contact Form Submission",
+      "description": "Messages sent from the website contact form.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "message", "createdAt"]
+    },
+    "SiteSettings": {
+      "title": "Site Configuration",
+      "description": "Global settings for the website's appearance and content.",
+      "type": "object",
+      "properties": {
+        "heroTitle": { "type": "string" },
+        "heroSubtitle": { "type": "string" },
+        "aboutText": { "type": "string" },
+        "primaryColor": { "type": "string" },
+        "fontFamily": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "posts": {
+      "schema": "Post",
+      "description": "Collection of blog posts"
+    },
+    "credentials": {
+      "schema": "Credential",
+      "description": "Collection of professional credentials"
+    },
+    "messages": {
+      "schema": "ContactMessage",
+      "description": "Collection of contact form submissions"
+    },
+    "settings": {
+      "schema": "SiteSettings",
+      "description": "Singleton-like collection for site settings"
+    }
+  }
+}
