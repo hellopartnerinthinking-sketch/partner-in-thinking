@@ -39,14 +39,13 @@ export default function ProgramDetailPage({
   const isGroupA = ["focus-alignment", "critical-framing", "organizational-politics"].includes(activeProg.id);
 
   const handleApplyClick = () => {
-    // Map the selected program ID back to the value expected in the select input
-    let selectVal = "기타";
-    if (activeProg.id === "focus-alignment") selectVal = "Focus & Alignment";
-    else if (activeProg.id === "critical-framing") selectVal = "Critical Problem Framing";
-    else if (activeProg.id === "thinking-conflict") selectVal = "Think Through Conflict";
-    else if (activeProg.id === "relational-dynamics") selectVal = "Relational Dynamics & Alignment";
-    else if (activeProg.id === "core-value") selectVal = "1:1 Coaching"; // map to coaching or let it preselect
-    else if (activeProg.id === "organizational-politics") selectVal = "기타";
+    // Map the selected program ID back to the value expected in the contact form
+    let selectVal = "1:1 Coaching";
+    if (activeProg.id === "focus-alignment" || activeProg.id === "critical-framing") selectVal = "성과 & 의사 결정 (Performance & Decision Alignment)";
+    else if (activeProg.id === "relational-dynamics") selectVal = "조직 & 대인 관계 (Team Dynamics & Alignment)";
+    else if (activeProg.id === "thinking-conflict") selectVal = "커뮤니케이션 (Impactful Communication)";
+    else if (activeProg.id === "core-value") selectVal = "멘탈 & 자기 관리 (Inner Order & Mental Resilience)";
+    else if (activeProg.id === "organizational-politics") selectVal = "리더십 & 커리어 (Leadership & Career)";
 
     onNavigateSection('#contact', selectVal);
   };

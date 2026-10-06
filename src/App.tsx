@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Menu, X, ArrowRight, Mail, Linkedin, ExternalLink, 
-  Plus, Edit2, Trash2, LogIn, LogOut, ChevronRight, ChevronDown,
+  Plus, Edit2, Trash2, LogIn, LogOut, ChevronRight, ChevronDown, Check,
   Award, BookOpen, MessageSquare, User, Settings,
   Layout, Target, Scale, Shield, Brain
 } from 'lucide-react';
@@ -176,7 +176,6 @@ const Navbar = ({
     { name: 'Credentials', href: '#credentials' },
     { name: 'Programs', href: '#program' },
     { name: 'Insights', href: '#insights' },
-    { name: 'Contact', href: '#contact' },
   ];
 
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -203,7 +202,7 @@ const Navbar = ({
           </div>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-7">
             {navLinks.map((link) => (
               <a 
                 key={link.name} 
@@ -214,6 +213,14 @@ const Navbar = ({
                 {link.name}
               </a>
             ))}
+            <a
+              href="#contact"
+              onClick={(e) => handleLinkClick(e, '#contact')}
+              className="ml-1 bg-brand-primary hover:opacity-90 text-white text-xs font-medium px-4 py-2 rounded-full transition-all duration-300 shadow-sm shadow-brand-primary/20 flex items-center gap-1.5"
+            >
+              <span>30분 무료 코칭</span>
+              <ArrowRight size={12} />
+            </a>
             {isAdmin && (
               <div className="flex items-center gap-4 pl-4 border-l border-brand-ink/10">
                 <a href="#admin" className="text-xs font-bold text-brand-primary">ADMIN</a>
@@ -252,6 +259,17 @@ const Navbar = ({
                   {link.name}
                 </a>
               ))}
+              <a
+                href="#contact"
+                onClick={(e) => {
+                  setIsOpen(false);
+                  handleLinkClick(e, '#contact');
+                }}
+                className="mt-2 bg-brand-primary text-white text-center py-3 rounded-xl font-medium flex items-center justify-center gap-2 shadow-sm"
+              >
+                <span>30분 무료 코칭</span>
+                <ArrowRight size={16} />
+              </a>
               {isAdmin && (
                 <div className="pt-4 border-t border-brand-ink/5">
                   <button onClick={onLogout} className="text-sm uppercase tracking-widest">Logout</button>
@@ -303,9 +321,9 @@ const Hero = () => (
         <div className="flex flex-wrap gap-6">
           <a 
             href="#contact" 
-            className="bg-brand-primary text-white px-10 py-4 rounded-full flex items-center gap-3 hover:opacity-90 transition-all duration-300 text-lg font-medium shadow-lg shadow-brand-primary/20"
+            className="bg-brand-primary text-white px-8 sm:px-10 py-4 rounded-full flex items-center gap-3 hover:opacity-90 transition-all duration-300 text-base sm:text-lg font-medium shadow-lg shadow-brand-primary/20"
           >
-            Connect with Your Thinking Partner <ArrowRight size={20} />
+            사고 파트너와 1:1 30분 무료 세션 신청하기 <ArrowRight size={20} />
           </a>
         </div>
       </motion.div>
@@ -405,53 +423,58 @@ const About = () => (
   </section>
 );
 
-const Program = ({ onSelectProgramDetail }: { onSelectProgramDetail: (slug: string) => void }) => {
-  const categories = [
+const Program = ({ 
+  onSelectProgramDetail,
+  onNavigateContact 
+}: { 
+  onSelectProgramDetail: (slug: string) => void;
+  onNavigateContact?: (programTitle?: string) => void;
+}) => {
+  const pillars = [
     {
-      id: "clarity",
-      title: "Complexity to Actionable Clarity",
-      subtitle: "복잡하게 얽힌 생각의 파편을 구조화해,\n사안의 본질을 분명히 하고 실행 가능한 선택으로 이동하는 사고 프로그램 라인입니다.",
-      programs: [
-        {
-          title: "Focus & Alignment",
-          summary: "에너지가 분산된 상태에서, \n무엇에 집중해야 할지 다시 정렬하는 사고 작업",
-          description: "해야 할 일은 많지만, 어디에 에너지를 써야 할지 흐려질 때가 있습니다. Focus & Alignment는 현재의 선택과 우선순위를 점검하고, 지금 가장 중요한 과제에 에너지를 다시 정렬하는 사고 중심 프로그램입니다.",
-          image: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=1000&auto=format&fit=crop",
-          sessionsCount: "1:1 (3~5회)",
-          totalDuration: "3~5시간"
-        },
-        {
-          title: "Critical Problem Framing",
-          summary: "해결보다 앞서,\n문제의 정의 자체를 다시 세우는 사고 작업",
-          description: "문제를 해결하려 애쓰고 있지만, 정작 무엇이 문제인지가 명확하지 않을 때가 있습니다. Critical Problem Framing은 현재 해결해야 할 핵심 문제를 다시 정의하고, 복잡한 상황 속에서도 실질적인 출발점을 세우는 사고 프로그램입니다.",
-          image: "https://images.unsplash.com/photo-1507537297725-24a1c029d3ca?q=80&w=1000&auto=format&fit=crop",
-          sessionsCount: "1:1 (4~6회)",
-          totalDuration: "4~6시간"
-        }
-      ]
+      id: "performance-decision",
+      koreanTitle: "성과 & 의사 결정",
+      englishTitle: "Performance & Decision Alignment",
+      relevance: "할 일은 쏟아지고 불확실성은 높은데, 지금 어떤 결정부터 내려야 할지 막막할 때",
+      outcome: "명확한 기준에 따라 우선순위를 정하고 가장 중요한 과제에 몰입하게 됩니다. 나만의 업무 가치와 데이터를 바탕으로 의사결정의 확신을 가질 수 있습니다.",
+      image: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=1000&auto=format&fit=crop",
+      slug: "focus-alignment"
     },
     {
-      id: "balance",
-      title: "Inner Order & Balance",
-      subtitle: "누적된 감정과 반복되는 내적 충돌을 객관적으로 정리해,\n사고 상태의 균형을 회복하고 실행을 가로막는 심리적 장벽을 살펴보는 프로그램 라인입니다.",
-      programs: [
-        {
-          title: "Think Through Conflict",
-          summary: "갈등 상황에서 반복되는\n사고와 감정의 패턴을 짚어내고 구조화하는 프로그램",
-          description: "갈등 상황에서는 사고가 빠르게 단순화되고, 우리는 익숙한 반응을 반복하게 됩니다. 이 프로그램은 갈등의 순간에 내가 자동적으로 선택해온 사고 반응을 살펴보고, 그 패턴이 지금의 나에게도 유효한지를 점검하는 사고 중심 프로그램입니다.\n(TKI 기반)",
-          image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop",
-          sessionsCount: "1:1 (4~6회)",
-          totalDuration: "4~6시간"
-        },
-        {
-          title: "Relational Dynamics & Alignment",
-          summary: "관계 속에 형성된 사고 구조를 \n파악하는 프로그램",
-          description: "Relational Dynamics & Alignment는 관계를 더 잘 맺기 위한 프로그램이 아닙니다. 이 프로그램은 관계 속에서 반복되어 온 나의 사고 구조와 선택을 살펴보고, 그 구조가 현재의 역할과 삶에도 여전히 적절한지를 점검하는 사고 파트너십입니다.\n(FIRO-B 기반)",
-          image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1000&auto=format&fit=crop",
-          sessionsCount: "1:1 (3~6회)",
-          totalDuration: "3~6시간"
-        }
-      ]
+      id: "team-dynamics",
+      koreanTitle: "조직 & 대인 관계",
+      englishTitle: "Team Dynamics & Alignment",
+      relevance: "팀원 간 갈등, 모호한 R&R, 타 부서와의 상극으로 조직 성과가 정체되어 있을 때",
+      outcome: "관계 속 반복되는 충돌 패턴의 원인을 분석해 원활한 협업 체계를 구축합니다. 명확한 역할 정의와 신뢰 형성을 통해 팀 시너지를 극대화하고, 건강한 조직 문화를 완성합니다.",
+      image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1000&auto=format&fit=crop",
+      slug: "relational-dynamics"
+    },
+    {
+      id: "impactful-communication",
+      koreanTitle: "커뮤니케이션",
+      englishTitle: "Impactful Communication",
+      relevance: "의도와 다르게 전달되는 지시, 성과 저고자 면담 등 난처한 대화가 부담스러울 때",
+      outcome: "대화의 본질을 정립하여 핵심이 명확히 전달되는 대화 구조를 터득합니다. 어려운 피드백 상황에서도 관계를 해치지 않고 솔루션을 끌어내는 심리적 주도권을 확보합니다.",
+      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1000&auto=format&fit=crop",
+      slug: "thinking-conflict"
+    },
+    {
+      id: "inner-order",
+      koreanTitle: "멘탈 & 자기 관리",
+      englishTitle: "Inner Order & Mental Resilience",
+      relevance: "리더로서의 고독감과 과도한 책임감으로 번아웃이 오고 감정 조절이 힘들 때",
+      outcome: "감정적 앙금과 누적된 스트레스를 객관적으로 정리해 내면의 평정심을 회복합니다. 어떤 위기 상황에서도 흔들리지 않는 단단한 회복탄력성과 지속 가능한 리더십 에너지를 충전합니다.",
+      image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1000&auto=format&fit=crop",
+      slug: "core-value"
+    },
+    {
+      id: "authentic-leadership",
+      koreanTitle: "리더십 & 커리어",
+      englishTitle: "Leadership & Career",
+      relevance: "나만의 리더십 스타일이 모호하거나, 리더로서의 다음 커리어 방향이 고민될 때",
+      outcome: "자신의 핵심 강점을 재발견하여 고유한 리더십 정체성과 브랜딩을 확립합니다. 단기적 역할을 넘어 조직 내 영향력을 확장하고 장기적인 리더십 비전 로드맵을 선명하게 설계합니다.",
+      image: "https://images.unsplash.com/photo-1507537297725-24a1c029d3ca?q=80&w=1000&auto=format&fit=crop",
+      slug: "organizational-politics"
     }
   ];
 
@@ -466,21 +489,25 @@ const Program = ({ onSelectProgramDetail }: { onSelectProgramDetail: (slug: stri
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <span className="text-xs uppercase tracking-[0.3em] text-brand-primary mb-6 block font-bold">Tailored Solutions</span>
+            <span className="text-xs uppercase tracking-[0.3em] text-brand-primary mb-6 block font-bold">5 Core Coaching Pillars</span>
             <h2 className="text-4xl md:text-6xl font-serif italic text-brand-ink mb-12">Programs</h2>
             
             <div className="max-w-3xl space-y-4 text-brand-ink/80 text-lg leading-relaxed break-keep">
-              <p>지금 해결해야 할 문제가 무엇을 할지가 불분명한 상태라면 <br className="hidden md:block" />
-              <span className="font-bold text-brand-ink">Complexity to Actionable Clarity</span>에서 시작하는 것이 적합합니다.</p>
-              <p>문제는 비교적 명확하지만, 반복되는 관계의 마찰이나 내적 충돌이 있다면 <br className="hidden md:block" />
-              <span className="font-bold text-brand-ink">Inner Order & Balance</span>가 출발점이 됩니다.</p>
-              <p>이후 코칭 세션으로 Action Plan과 실행을 이어갈 수 있습니다.</p>
+              <p>
+                리더가 처한 현실과 당면 과제는 저마다 다르지만,<br className="hidden md:block" />
+                현장에서 마주하는 보편적인 고민은 아래의 영역들로 모입니다.
+              </p>
+              <p>
+                복잡하게 얽힌 내 고민의 본질을 객관적으로 들여다보고 싶다면,<br className="hidden md:block" />
+                30분 무료 코칭을 통해 생각의 정돈과 방향성을 함께 탐색해 보세요.
+              </p>
               
               <div className="mt-8 pt-6 border-t border-brand-ink/10">
                 <p className="text-sm md:text-base text-[#b58b4c] font-medium leading-relaxed flex items-start gap-2 break-keep">
                   <span className="inline-block mt-1.5 w-1.5 h-1.5 rounded-full bg-[#b58b4c] shrink-0" />
                   <span>
-                    아래 소개된 모든 프로그램 및 회차별 커리큘럼은 설계 예시(Sample)이며, 실제 코칭 세션은 고객이 직면한 구체적인 비즈니스 맥락과 개발 영역에 맞추어 완전히 1:1로 맞춤 설계(Tailored)되어 진행됩니다.
+                    모든 프로그램은 설계 기준이며, 실제 코칭 세션은 리더가 직면한 비즈니스 맥락과 조직 환경에 맞추어<br />
+                    1:1 맞춤형(Tailored)으로 최적화되어 진행됩니다.
                   </span>
                 </p>
               </div>
@@ -488,110 +515,127 @@ const Program = ({ onSelectProgramDetail }: { onSelectProgramDetail: (slug: stri
           </motion.div>
         </div>
 
-        {/* Categories */}
-        <div className="space-y-32">
-          {categories.map((category, catIdx) => (
-            <div key={category.id} className="space-y-12">
-              {/* Category Header */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="border-l-2 border-brand-ink pl-6"
-              >
-                <h3 className="text-2xl md:text-3xl font-sans font-bold text-brand-ink mb-2 tracking-tight">{category.title}</h3>
-                <p className="text-brand-ink/70 text-lg whitespace-pre-line leading-relaxed break-keep">
-                  {category.subtitle}
-                </p>
-              </motion.div>
-
-              {/* Sub-Programs */}
-              <div className="space-y-20 pl-6 md:pl-12">
-                {category.programs.map((prog, progIdx) => (
-                  <motion.div
-                    key={progIdx}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.8, delay: progIdx * 0.1 }}
-                    className="grid md:grid-cols-12 gap-8 md:gap-12 items-start"
-                  >
-                    {/* Left: Image */}
-                    <div className="md:col-span-3 lg:col-span-2">
-                      <div className="aspect-square overflow-hidden rounded-2xl shadow-sm border border-brand-ink/5">
-                        <img 
-                          src={prog.image} 
-                          alt={prog.title} 
-                          className="w-full h-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Right: Content Area */}
-                    <div className="md:col-span-9 lg:col-span-10">
-                      {/* Title */}
-                      <div className="flex flex-wrap items-center gap-3 mb-1.5">
-                        <h4 className="text-xl font-bold text-brand-ink">
-                          {prog.title}
-                        </h4>
-                      </div>
-                      
-                      {/* Divider Line */}
-                      <div className="w-full h-px bg-brand-ink/10 mb-4"></div>
-                      
-                      {/* Summary & Description Grid */}
-                      <div className="grid md:grid-cols-2 gap-6 md:gap-10">
-                        {/* Summary (Left side of the content) */}
-                        <div className="space-y-2">
-                          <p className="text-brand-ink/80 font-medium leading-snug break-keep whitespace-pre-line">
-                            {prog.summary}
-                          </p>
-                        </div>
-                        
-                        {/* Description (Right side of the content) */}
-                        <div className="flex flex-col h-full">
-                          <p className="text-brand-ink/60 text-sm leading-relaxed break-keep whitespace-pre-line mb-6">
-                            {prog.description}
-                          </p>
-                          <div className="mt-auto flex justify-end">
-                            <button 
-                              onClick={() => {
-                                const title = prog.title;
-                                let slug = "focus-alignment";
-                                if (title === "Focus & Alignment") slug = "focus-alignment";
-                                else if (title === "Critical Problem Framing") slug = "critical-framing";
-                                else if (title === "Think Through Conflict") slug = "thinking-conflict";
-                                else if (title === "Relational Dynamics & Alignment") slug = "relational-dynamics";
-                                onSelectProgramDetail(slug);
-                              }}
-                              className="inline-block bg-brand-ink/80 hover:bg-[#5A5A40] text-white px-6 py-2.5 text-sm font-bold transition-colors rounded-sm cursor-pointer"
-                            >
-                              프로그램 상세보기
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+        {/* 5 Pillars List */}
+        <div className="space-y-20 md:space-y-24">
+          {pillars.map((prog, progIdx) => (
+            <motion.div
+              key={prog.id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: progIdx * 0.08 }}
+              className="grid md:grid-cols-12 gap-8 md:gap-12 items-start"
+            >
+              {/* Left: Image */}
+              <div className="md:col-span-3 lg:col-span-2">
+                <div className="aspect-square overflow-hidden rounded-2xl shadow-sm border border-brand-ink/5">
+                  <img 
+                    src={prog.image} 
+                    alt={`${prog.koreanTitle} ${prog.englishTitle}`} 
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
               </div>
-            </div>
+
+              {/* Right: Content Area */}
+              <div className="md:col-span-9 lg:col-span-10">
+                {/* Title: 한글 먼저, 영어를 작은 크기로 뒤에, 숫자는 제거 */}
+                <div className="flex flex-wrap items-baseline gap-2.5 md:gap-3 mb-2">
+                  <h4 className="text-xl md:text-2xl font-bold text-brand-ink tracking-tight">
+                    {prog.koreanTitle}
+                  </h4>
+                  <span className="text-sm md:text-base font-normal text-brand-ink/50 tracking-normal">
+                    {prog.englishTitle}
+                  </span>
+                </div>
+                
+                {/* Divider Line */}
+                <div className="w-full h-px bg-brand-ink/10 mb-5"></div>
+                
+                {/* Summary & Description Grid */}
+                <div className="grid md:grid-cols-2 gap-6 md:gap-10">
+                  {/* Summary / 타깃의 구체적 고민 상황 (메인 카피) */}
+                  <div className="space-y-2">
+                    <p className="text-brand-ink/90 font-medium text-base md:text-lg leading-relaxed break-keep">
+                      "{prog.relevance}"
+                    </p>
+                  </div>
+                  
+                  {/* Description / 우측 상세 설명: 코칭 후 기대효과 */}
+                  <div className="flex flex-col h-full justify-center">
+                    <p className="text-brand-ink/70 text-sm md:text-base leading-relaxed break-keep">
+                      {prog.outcome}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           ))}
         </div>
 
+        {/* Unified Call To Action */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="mt-20 md:mt-28 bg-brand-bg/60 border border-brand-ink/10 rounded-[32px] md:rounded-[40px] p-8 sm:p-12 md:p-16 text-center max-w-4xl mx-auto shadow-sm"
+        >
+          <span className="text-xs uppercase tracking-[0.3em] text-[#ab8040] font-bold block mb-3">
+            1:1 Thinking Partner Session
+          </span>
+          <h3 className="text-2xl md:text-3xl font-sans font-bold text-brand-ink mb-4 break-keep tracking-tight">
+            함께 생각해 보고 싶은 주제나 고민이 있으신가요?
+          </h3>
+          <p className="text-brand-ink/75 text-base md:text-lg leading-relaxed max-w-2xl mx-auto mb-6 break-keep">
+            어떤 주제라도 좋습니다. 당면한 고민이나 생각을 남겨주시면,<br className="hidden sm:block" /> 
+            30분 무료 코칭을 통해 함께 방향성을 찾아드립니다.
+          </p>
+
+          {/* 3-Step Process Mini Guide */}
+          <div className="my-8 py-5 px-4 sm:px-6 bg-white/80 rounded-2xl border border-brand-ink/10 max-w-2xl mx-auto shadow-sm">
+            <div className="grid sm:grid-cols-3 gap-3 sm:gap-4 text-left sm:text-center divide-y sm:divide-y-0 sm:divide-x divide-brand-ink/10">
+              <div className="pt-2 sm:pt-0 sm:px-3">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#ab8040] block mb-1">STEP 1</span>
+                <p className="text-sm font-bold text-brand-ink mb-0.5">간단한 신청</p>
+                <p className="text-xs text-brand-ink/60">고민 키워드 작성</p>
+              </div>
+              <div className="pt-3 sm:pt-0 sm:px-3">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#ab8040] block mb-1">STEP 2</span>
+                <p className="text-sm font-bold text-brand-ink mb-0.5">일정 확정</p>
+                <p className="text-xs text-brand-ink/60">비대면 Zoom 또는 유선 조율</p>
+              </div>
+              <div className="pt-3 sm:pt-0 sm:px-3">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#ab8040] block mb-1">STEP 3</span>
+                <p className="text-sm font-bold text-brand-ink mb-0.5">1:1 맞춤 세션</p>
+                <p className="text-xs text-brand-ink/60">30분간 생각 정리 및 방향성 도출</p>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (onNavigateContact) {
+                onNavigateContact();
+              } else {
+                const el = document.getElementById('contact');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            className="inline-flex items-center gap-3 bg-brand-primary hover:opacity-90 text-white px-8 md:px-10 py-4 rounded-2xl text-base sm:text-lg md:text-xl font-medium shadow-lg shadow-brand-primary/20 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+          >
+            <span>사고 파트너와 1:1 30분 무료 세션 신청하기</span>
+            <ArrowRight size={20} />
+          </button>
+          <p className="text-xs text-brand-ink/45 mt-4">
+            세션 전 사전 준비나 별도의 비용은 필요하지 않습니다. 편안한 마음으로 신청해 주세요.
+          </p>
+        </motion.div>
+
         {/* Footer Info */}
         <div className="mt-32 pt-16 border-t border-brand-ink/10 space-y-12">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-brand-ink/60 text-base"
-          >
-            이외의 주제나 복합적인 고민에 대해서는 <a href="#contact" className="text-brand-primary font-bold hover:underline">Contact</a>를 통해 개별 문의해 주세요.
-          </motion.div>
-
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -918,30 +962,97 @@ const Credentials = ({ credentials }: { credentials: Credential[] }) => {
   );
 };
 
+const AVAILABLE_PROGRAMS = [
+  "성과 & 의사 결정 (Performance & Decision Alignment)",
+  "조직 & 대인 관계 (Team Dynamics & Alignment)",
+  "커뮤니케이션 (Impactful Communication)",
+  "멘탈 & 자기 관리 (Inner Order & Mental Resilience)",
+  "리더십 & 커리어 (Leadership & Career)",
+  "1:1 Coaching",
+  "기타"
+];
+
 const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
-  const [formData, setFormData] = useState({ name: '', email: '', program: initialProgram, message: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>(() => {
+    if (!initialProgram) return [];
+    const matched = AVAILABLE_PROGRAMS.find(p => 
+      p === initialProgram || p.startsWith(initialProgram) || p.includes(initialProgram)
+    );
+    return [matched || initialProgram];
+  });
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [programError, setProgramError] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (initialProgram) {
+      const matched = AVAILABLE_PROGRAMS.find(p => 
+        p === initialProgram || p.startsWith(initialProgram) || p.includes(initialProgram)
+      );
+      const toAdd = matched || initialProgram;
+      if (!selectedPrograms.includes(toAdd)) {
+        setSelectedPrograms(prev => [...prev, toAdd]);
+        setProgramError(false);
+      }
+    }
+  }, [initialProgram]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleProgram = (program: string) => {
+    setSelectedPrograms(prev => {
+      const next = prev.includes(program) 
+        ? prev.filter(p => p !== program) 
+        : [...prev, program];
+      if (next.length > 0) setProgramError(false);
+      return next;
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedPrograms.length === 0) {
+      setProgramError(true);
+      setIsDropdownOpen(true);
+      return;
+    }
+
     setStatus('sending');
     try {
+      const programsText = selectedPrograms.join(', ');
+
       // Save to database as backup
       await addDoc(collection(db, 'messages'), {
-        ...formData,
+        name: formData.name,
+        email: formData.email,
+        program: programsText,
+        programs: selectedPrograms,
+        subject: `Thinking Journey Inquiry: ${programsText}`,
+        message: formData.message,
         createdAt: new Timestamp(Math.floor(Date.now() / 1000), 0)
       });
 
       // Construct mailto URL
-      const subject = encodeURIComponent(`Thinking Journey Inquiry: ${formData.program}`);
-      const body = encodeURIComponent(`이름: ${formData.name}\n이메일: ${formData.email}\n프로그램: ${formData.program}\n\n메시지:\n${formData.message}`);
+      const subject = encodeURIComponent(`Thinking Journey Inquiry: ${programsText}`);
+      const body = encodeURIComponent(`이름: ${formData.name}\n이메일: ${formData.email}\n관심 프로그램: ${programsText}\n\n메시지:\n${formData.message}`);
       const mailtoUrl = `mailto:Contact@partnerinthinking.com?subject=${subject}&body=${body}`;
       
       // Open mail client
       window.location.href = mailtoUrl;
 
       setStatus('success');
-      setFormData({ name: '', email: '', program: '', message: '' });
+      setFormData({ name: '', email: '', message: '' });
+      setSelectedPrograms([]);
       setTimeout(() => setStatus('idle'), 5000);
     } catch (err) {
       console.error(err);
@@ -1012,29 +1123,104 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
               </div>
             </div>
             
-            <div className="space-y-3">
-              <label className="text-sm font-bold text-brand-ink/80 ml-1">프로그램</label>
-              <div className="relative">
-                <select 
-                  required
-                  value={formData.program}
-                  onChange={e => setFormData({...formData, program: e.target.value})}
-                  className="w-full bg-brand-bg border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-brand-primary outline-none transition-all appearance-none cursor-pointer" 
-                >
-                  <option value="" disabled>프로그램을 선택해주세요</option>
-                  <option value="Focus & Alignment">Focus & Alignment</option>
-                  <option value="Critical Problem Framing">Critical Problem Framing</option>
-                  <option value="Think Through Conflict">Think Through Conflict</option>
-                  <option value="Relational Dynamics & Alignment">Relational Dynamics & Alignment</option>
-                  <option value="Thinking Your Core Value">Thinking Your Core Value</option>
-                  <option value="Thinking Organizational Politics">Thinking Organizational Politics</option>
-                  <option value="1:1 Coaching">1:1 Coaching</option>
-                  <option value="기타">기타</option>
-                </select>
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-brand-ink/30">
-                  <ChevronDown size={20} />
-                </div>
+            <div className="space-y-3" ref={dropdownRef}>
+              <div className="flex items-center justify-between ml-1">
+                <label className="text-sm font-bold text-brand-ink/80">관심 프로그램</label>
+                <span className="text-xs text-brand-ink/50 hidden sm:inline">중복 선택 가능</span>
               </div>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(prev => !prev)}
+                  className={`w-full bg-brand-bg text-left rounded-2xl px-6 py-4 outline-none transition-all flex items-center justify-between cursor-pointer min-h-[58px] ${
+                    programError 
+                      ? 'ring-2 ring-red-400 bg-red-50/30' 
+                      : isDropdownOpen 
+                        ? 'ring-2 ring-brand-primary' 
+                        : 'focus:ring-2 focus:ring-brand-primary'
+                  }`}
+                  aria-expanded={isDropdownOpen}
+                >
+                  <div className="flex-1 pr-3 overflow-hidden">
+                    {selectedPrograms.length === 0 ? (
+                      <span className="text-brand-ink/40 text-sm sm:text-base select-none">
+                        관심 있는 프로그램을 선택해 주세요 (중복 선택 가능)
+                      </span>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5 py-0.5">
+                        {selectedPrograms.map(p => (
+                          <span
+                            key={p}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-primary text-white shadow-sm"
+                          >
+                            <span>{p}</span>
+                            <span
+                              role="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleProgram(p);
+                              }}
+                              className="hover:opacity-75 focus:outline-none cursor-pointer"
+                              aria-label={`${p} 선택 해제`}
+                            >
+                              <X size={12} />
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className={`shrink-0 text-brand-ink/40 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-brand-primary' : ''}`}>
+                    <ChevronDown size={20} />
+                  </div>
+                </button>
+
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute z-30 left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-brand-ink/10 p-2 space-y-1 max-h-72 overflow-y-auto"
+                    >
+                      <div className="px-3 py-2 text-xs font-medium text-brand-ink/60 border-b border-brand-ink/5">
+                        관심 있는 프로그램을 선택해 주세요 (중복 선택 가능)
+                      </div>
+                      <div className="pt-1 space-y-0.5">
+                        {AVAILABLE_PROGRAMS.map(program => {
+                          const isSelected = selectedPrograms.includes(program);
+                          return (
+                            <button
+                              key={program}
+                              type="button"
+                              onClick={() => toggleProgram(program)}
+                              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium flex items-center justify-between transition-colors ${
+                                isSelected 
+                                  ? 'bg-brand-primary/10 text-brand-primary font-semibold' 
+                                  : 'text-brand-ink/80 hover:bg-brand-bg/80'
+                              }`}
+                            >
+                              <span>{program}</span>
+                              <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition-colors ${
+                                isSelected 
+                                  ? 'bg-brand-primary border-brand-primary text-white' 
+                                  : 'border-brand-ink/20 bg-white'
+                              }`}>
+                                {isSelected && <Check size={14} strokeWidth={3} />}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              {programError && (
+                <p className="text-xs text-red-500 ml-1">관심 있는 프로그램을 하나 이상 선택해 주세요.</p>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -1042,7 +1228,7 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
               <textarea 
                 required
                 rows={4}
-                placeholder="함께 생각해 보고 싶은 이슈나 프로그램 관련해서 궁금한 내용을 간단히 적어주세요."
+                placeholder="함께 생각해 보고 싶은 주제나 고민을 적어주시면 30분 무료 코칭을 진행해 드립니다."
                 value={formData.message}
                 onChange={e => setFormData({...formData, message: e.target.value})}
                 className="w-full bg-brand-bg border-none rounded-2xl px-6 py-5 focus:ring-2 focus:ring-brand-primary outline-none transition-all resize-none placeholder:text-brand-ink/30" 
@@ -1052,10 +1238,15 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
             <button 
               type="submit"
               disabled={status === 'sending'}
-              className="w-full bg-brand-primary text-white py-4 rounded-2xl text-xl font-medium hover:opacity-90 transition-all duration-300 shadow-lg shadow-brand-primary/20 disabled:opacity-50"
+              className="w-full bg-brand-primary text-white py-4 rounded-2xl text-lg sm:text-xl font-medium hover:opacity-90 transition-all duration-300 shadow-lg shadow-brand-primary/20 disabled:opacity-50 cursor-pointer"
             >
-              {status === 'sending' ? '전송 중...' : '함께 생각 정리하기'}
+              {status === 'sending' ? '전송 중...' : '사고 파트너와 1:1 30분 무료 세션 신청하기'}
             </button>
+            
+            <p className="text-center text-xs text-brand-ink/50 mt-3 flex items-center justify-center gap-1.5">
+              <Shield size={13} className="text-[#ab8040] shrink-0" />
+              <span>작성해 주신 모든 대화 주제와 개인정보는 비밀보장 원칙에 따라 철저히 보호됩니다.</span>
+            </p>
             
             {status === 'success' && (
               <p className="text-center text-brand-primary font-medium animate-fade-in">메시지가 전송되었습니다. 곧 연락드리겠습니다.</p>
@@ -1512,7 +1703,10 @@ export default function App() {
             <Hero />
             <About />
             <Credentials credentials={credentials} />
-            <Program onSelectProgramDetail={handleSelectProgramDetail} />
+            <Program 
+              onSelectProgramDetail={handleSelectProgramDetail} 
+              onNavigateContact={(title) => handleNavigateSection('#contact', title)}
+            />
             <Insights posts={posts.length > 0 ? posts : (SEED_POSTS as Post[]).slice(0, 6)} />
             <Contact key={selectedContactProgram} initialProgram={selectedContactProgram} />
           </main>
