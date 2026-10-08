@@ -973,7 +973,7 @@ const AVAILABLE_PROGRAMS = [
 ];
 
 const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [formData, setFormData] = useState({ name: '', phone: '', email: '', message: '' });
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>(() => {
     if (!initialProgram) return [];
     const matched = AVAILABLE_PROGRAMS.find(p => 
@@ -1034,6 +1034,7 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
       // Save to database as backup
       await addDoc(collection(db, 'messages'), {
         name: formData.name,
+        phone: formData.phone,
         email: formData.email,
         program: programsText,
         programs: selectedPrograms,
@@ -1044,14 +1045,14 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
 
       // Construct mailto URL
       const subject = encodeURIComponent(`Thinking Journey Inquiry: ${programsText}`);
-      const body = encodeURIComponent(`이름: ${formData.name}\n이메일: ${formData.email}\n관심 프로그램: ${programsText}\n\n메시지:\n${formData.message}`);
+      const body = encodeURIComponent(`이름: ${formData.name}\n연락처: ${formData.phone}\n이메일: ${formData.email}\n관심 프로그램: ${programsText}\n\n메시지:\n${formData.message}`);
       const mailtoUrl = `mailto:Contact@partnerinthinking.com?subject=${subject}&body=${body}`;
       
       // Open mail client
       window.location.href = mailtoUrl;
 
       setStatus('success');
-      setFormData({ name: '', email: '', message: '' });
+      setFormData({ name: '', phone: '', email: '', message: '' });
       setSelectedPrograms([]);
       setTimeout(() => setStatus('idle'), 5000);
     } catch (err) {
@@ -1100,33 +1101,48 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
+            {/* 1st Row: 이름 & 연락처 (한 줄에 2열) */}
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-3">
                 <label className="text-sm font-bold text-brand-ink/80 ml-1">이름</label>
                 <input 
                   required
                   type="text" 
+                  placeholder="성함을 입력해 주세요"
                   value={formData.name}
                   onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full bg-brand-bg border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-brand-primary outline-none transition-all" 
+                  className="w-full bg-brand-bg border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-brand-primary outline-none transition-all placeholder:text-brand-ink/30" 
                 />
               </div>
               <div className="space-y-3">
-                <label className="text-sm font-bold text-brand-ink/80 ml-1">이메일</label>
+                <label className="text-sm font-bold text-brand-ink/80 ml-1">연락처</label>
                 <input 
                   required
-                  type="email" 
-                  value={formData.email}
-                  onChange={e => setFormData({...formData, email: e.target.value})}
-                  className="w-full bg-brand-bg border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-brand-primary outline-none transition-all" 
+                  type="tel" 
+                  placeholder="010-0000-0000"
+                  value={formData.phone}
+                  onChange={e => setFormData({...formData, phone: e.target.value})}
+                  className="w-full bg-brand-bg border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-brand-primary outline-none transition-all placeholder:text-brand-ink/30" 
                 />
               </div>
+            </div>
+
+            {/* 2nd Row: 이메일 (다음 줄에 단독 배치) */}
+            <div className="space-y-3">
+              <label className="text-sm font-bold text-brand-ink/80 ml-1">이메일</label>
+              <input 
+                required
+                type="email" 
+                placeholder="답변 및 일정 안내를 받으실 이메일 주소"
+                value={formData.email}
+                onChange={e => setFormData({...formData, email: e.target.value})}
+                className="w-full bg-brand-bg border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-brand-primary outline-none transition-all placeholder:text-brand-ink/30" 
+              />
             </div>
             
             <div className="space-y-3" ref={dropdownRef}>
               <div className="flex items-center justify-between ml-1">
                 <label className="text-sm font-bold text-brand-ink/80">관심 프로그램</label>
-                <span className="text-xs text-brand-ink/50 hidden sm:inline">중복 선택 가능</span>
               </div>
 
               <div className="relative">
