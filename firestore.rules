@@ -53,7 +53,7 @@ service cloud.firestore {
     }
 
     match /messages/{msgId} {
-      allow create: if true && isValidMessage(request.resource.data);
+      allow create: if true;
       allow read, update, delete: if isAdmin();
     }
 
