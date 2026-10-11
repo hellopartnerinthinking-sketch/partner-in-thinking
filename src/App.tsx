@@ -337,8 +337,8 @@ const Hero = () => (
       >
         <div className="w-full max-w-lg mb-8">
           <img 
-            src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=2000&q=80" 
-            alt="Sunlight streaming through a lush green forest path" 
+            src="/src/assets/images/luxury_private_study_1791706207887.jpg" 
+            alt="Warm, serene executive study and consultation desk with a journal and fountain pen" 
             className="w-full aspect-[16/10] object-cover rounded-[40px] shadow-2xl shadow-black/10"
             referrerPolicy="no-referrer"
           />
