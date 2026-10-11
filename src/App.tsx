@@ -988,6 +988,8 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [programError, setProgramError] = useState(false);
+  const [showThankYouModal, setShowThankYouModal] = useState(false);
+  const [submittedName, setSubmittedName] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1013,6 +1015,24 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showThankYouModal) {
+        setShowThankYouModal(false);
+      }
+    };
+    if (showThankYouModal) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showThankYouModal]);
+
   const toggleProgram = (program: string) => {
     setSelectedPrograms(prev => {
       const next = prev.includes(program) 
@@ -1032,6 +1052,8 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
     }
 
     setStatus('sending');
+    const applicantName = formData.name.trim();
+
     try {
       const programsText = selectedPrograms.join(', ');
 
@@ -1051,14 +1073,22 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
       const subject = encodeURIComponent(`Thinking Journey Inquiry: ${programsText}`);
       const body = encodeURIComponent(`이름: ${formData.name}\n연락처: ${formData.phone}\n이메일: ${formData.email}\n관심 프로그램: ${programsText}\n\n메시지:\n${formData.message}`);
       const mailtoUrl = `mailto:Contact@partnerinthinking.com?subject=${subject}&body=${body}`;
-      
-      // Open mail client
-      window.location.href = mailtoUrl;
 
+      // Open thank you popup with applicant's name
+      setSubmittedName(applicantName);
+      setShowThankYouModal(true);
       setStatus('success');
       setFormData({ name: '', phone: '', email: '', message: '' });
       setSelectedPrograms([]);
-      setTimeout(() => setStatus('idle'), 5000);
+
+      // Trigger mail client as fallback
+      try {
+        window.location.href = mailtoUrl;
+      } catch (err) {
+        console.warn('Mail client launch skipped:', err);
+      }
+
+      setTimeout(() => setStatus('idle'), 6000);
     } catch (err) {
       console.error(err);
       setStatus('error');
@@ -1269,7 +1299,7 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
             </p>
             
             {status === 'success' && (
-              <p className="text-center text-brand-primary font-medium animate-fade-in">메시지가 전송되었습니다. 곧 연락드리겠습니다.</p>
+              <p className="text-center text-brand-primary font-medium animate-fade-in">30분 무료 코칭 신청이 접수되었습니다. 곧 연락드리겠습니다.</p>
             )}
             {status === 'error' && (
               <p className="text-center text-red-500 font-medium">오류가 발생했습니다. 다시 시도해 주세요.</p>
@@ -1277,6 +1307,87 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
           </form>
         </motion.div>
       </div>
+
+      {/* 30분 무료 코칭 신청 완료 Thank You Pop-up */}
+      <AnimatePresence>
+        {showThankYouModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setShowThankYouModal(false)}
+              className="absolute inset-0 bg-brand-ink/60 backdrop-blur-sm cursor-pointer"
+              aria-hidden="true"
+            />
+
+            {/* Modal Card */}
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="thank-you-popup-title"
+              initial={{ opacity: 0, scale: 0.92, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 16 }}
+              transition={{ type: "spring", damping: 25, stiffness: 320 }}
+              className="relative bg-white rounded-3xl sm:rounded-[36px] p-7 sm:p-10 md:p-12 max-w-lg w-full shadow-2xl border border-brand-ink/10 text-center z-10 overflow-hidden"
+            >
+              {/* Close (X) button */}
+              <button
+                type="button"
+                onClick={() => setShowThankYouModal(false)}
+                className="absolute top-5 right-5 sm:top-6 sm:right-6 p-2 rounded-full text-brand-ink/40 hover:text-brand-ink hover:bg-brand-bg transition-colors cursor-pointer"
+                aria-label="팝업 닫기"
+              >
+                <X size={20} />
+              </button>
+
+              {/* Icon badge */}
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <Check size={36} strokeWidth={2.5} className="text-brand-primary" />
+              </div>
+
+              {/* Title */}
+              <h3 
+                id="thank-you-popup-title"
+                className="text-xl sm:text-2xl font-serif font-bold text-brand-ink mb-4 leading-snug break-keep"
+              >
+                30분 무료 코칭 신청이 접수되었습니다.
+              </h3>
+
+              {/* Message */}
+              <div className="space-y-2 text-base sm:text-lg font-sans text-brand-ink/80 leading-relaxed mb-6 break-keep">
+                <p>
+                  <span className="font-semibold text-brand-primary">
+                    {submittedName || '신청자'}
+                  </span>
+                  님의 소중한 고민을 세심하게 읽어보겠습니다.
+                </p>
+                <p className="text-sm sm:text-base text-brand-ink/65">
+                  영업일 기준 48시간 이내에 세션 일정을 안내해 드리겠습니다.
+                </p>
+              </div>
+
+              {/* Privacy badge */}
+              <div className="bg-brand-bg/75 rounded-2xl p-4 mb-8 text-xs sm:text-sm text-brand-ink/60 flex items-center justify-center gap-2">
+                <Shield size={15} className="text-[#ab8040] shrink-0" />
+                <span>남겨주신 대화 주제와 개인정보는 비밀보장 원칙에 따라 안전하게 보호됩니다.</span>
+              </div>
+
+              {/* Confirm / Close Button */}
+              <button
+                type="button"
+                onClick={() => setShowThankYouModal(false)}
+                className="w-full bg-brand-primary text-white py-4 rounded-2xl text-base sm:text-lg font-medium hover:opacity-90 transition-all duration-300 shadow-lg shadow-brand-primary/20 cursor-pointer"
+              >
+                확인
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
