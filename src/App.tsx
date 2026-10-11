@@ -23,6 +23,7 @@ import { db, auth, login, logout } from './firebase';
 import { Post, Credential, ContactMessage, SiteSettings } from './types';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProgramDetailPage from './components/ProgramDetailPage';
+import heroStudyImg from './assets/images/luxury_private_study_1791706207887.jpg';
 
 // --- Seed Data ---
 const SEED_POSTS: Partial<Post>[] = [
@@ -333,14 +334,17 @@ const Hero = () => (
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 1.2, ease: "easeOut" }}
-        className="flex flex-col items-end lg:pt-52"
+        className="flex flex-col items-end lg:pt-36"
       >
-        <div className="w-full max-w-lg mb-8">
+        <div className="w-full max-w-lg mb-8 overflow-hidden rounded-[36px] shadow-2xl shadow-brand-ink/10 border border-brand-ink/5 bg-[#ece7df]">
           <img 
-            src="/src/assets/images/luxury_private_study_1791706207887.jpg" 
-            alt="Warm, serene executive study and consultation desk with a journal and fountain pen" 
-            className="w-full aspect-[16/10] object-cover rounded-[40px] shadow-2xl shadow-black/10"
+            src={heroStudyImg} 
+            alt="따뜻하고 아늑한 프라이빗 서재와 원목 데스크" 
+            className="w-full aspect-[16/10] object-cover transition-transform duration-700 hover:scale-[1.02]"
             referrerPolicy="no-referrer"
+            onError={(e) => {
+              e.currentTarget.src = '/images/hero_study.jpg';
+            }}
           />
         </div>
         <div className="text-right font-serif italic text-brand-ink/70 text-lg md:text-xl leading-relaxed max-w-sm">
