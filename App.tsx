@@ -9,7 +9,8 @@ import {
   Menu, X, ArrowRight, Mail, Linkedin, ExternalLink, 
   Plus, Edit2, Trash2, LogIn, LogOut, ChevronRight, ChevronDown, Check,
   Award, BookOpen, MessageSquare, User, Settings,
-  Layout, Target, Scale, Shield, Brain
+  Layout, Target, Scale, Shield, Brain,
+  Phone, Calendar, Clock, Copy, Search, Filter, AlertTriangle, CheckCircle, RefreshCw
 } from 'lucide-react';
 import { 
   collection, query, orderBy, onSnapshot, addDoc, 
@@ -382,22 +383,29 @@ const Hero = ({ onNavigateContact }: { onNavigateContact?: () => void }) => (
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 1.2, ease: "easeOut" }}
-        className="flex flex-col items-end lg:pt-36"
+        className="flex flex-col items-end lg:pt-[180px]"
       >
-        <div className="w-full max-w-lg mb-8 overflow-hidden rounded-[36px] shadow-2xl shadow-brand-ink/10 border border-brand-ink/5 bg-[#ece7df]">
-          <img 
-            src={heroStudyImg} 
-            alt="따뜻하고 아늑한 프라이빗 서재와 원목 데스크" 
-            className="w-full aspect-[16/10] object-cover transition-transform duration-700 hover:scale-[1.02]"
-            referrerPolicy="no-referrer"
-            onError={(e) => {
-              e.currentTarget.src = '/images/hero_study.jpg';
-            }}
-          />
-        </div>
-        <div className="text-right font-serif italic text-brand-ink/70 text-lg md:text-xl leading-relaxed max-w-sm">
-          <p>When the moment truly matters</p>
-          <p>You don't have to lead by yourself.</p>
+        <div className="w-full max-w-sm">
+          {/* Rounded photo frame */}
+          <div className="overflow-hidden rounded-[32px] shadow-2xl shadow-brand-ink/10 border border-brand-ink/5 bg-brand-bg-alt">
+            <img 
+              src={heroStudyImg} 
+              alt="따뜻한 조명이 켜진 프라이빗 서재 데스크" 
+              className="w-full aspect-[4/3] object-cover"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.currentTarget.src = '/images/hero_study.jpg';
+              }}
+            />
+          </div>
+          
+          {/* Quote text beneath the image, right aligned, scaled down to match '사고 파트너입니다.' baseline */}
+          <div className="mt-5 text-right pr-1">
+            <p className="font-serif italic text-brand-ink/80 text-base sm:text-lg leading-snug">
+              When the moment truly matters<br />
+              You don’t have to lead by yourself.
+            </p>
+          </div>
         </div>
       </motion.div>
     </div>
@@ -1037,8 +1045,6 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [programError, setProgramError] = useState(false);
-  const [showThankYouModal, setShowThankYouModal] = useState(false);
-  const [submittedName, setSubmittedName] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1064,24 +1070,6 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showThankYouModal) {
-        setShowThankYouModal(false);
-      }
-    };
-    if (showThankYouModal) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [showThankYouModal]);
-
   const toggleProgram = (program: string) => {
     setSelectedPrograms(prev => {
       const next = prev.includes(program) 
@@ -1101,10 +1089,7 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
     const finalPrograms = selectedPrograms;
     const programsText = finalPrograms.join(', ');
 
-    // 1. 즉시 Thank You 팝업 모달을 화면에 띄움
-    setSubmittedName(applicantName);
-    setShowThankYouModal(true);
-    setStatus('success');
+    setStatus('sending');
 
     // 2. 폼 입력값 보관 후 초기화
     const submissionData = {
@@ -1125,8 +1110,10 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
     // 3. 백그라운드에서 안전하게 데이터베이스(Firestore)에 저장
     try {
       await addDoc(collection(db, 'messages'), submissionData);
+      setStatus('idle');
     } catch (err) {
       console.warn('DB submission backup notice:', err);
+      setStatus('error');
     }
   };
 
@@ -1343,386 +1330,491 @@ const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
         </motion.div>
       </div>
 
-      {/* 30분 무료 세션 신청 완료 Thank You Pop-up */}
+          </section>
+  );
+};
+
+// --- Admin Dashboard (Contact Submissions) ---
+const AdminDashboard = ({ messages, onLogout }: { messages: ContactMessage[], onLogout: () => void }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'free_session' | 'other'>('all');
+  const [deleteTarget, setDeleteTarget] = useState<ContactMessage | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Auto-hide toast after 3 seconds
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
+
+  // Format timestamp helper
+  const formatTimestamp = (createdAt: any) => {
+    if (!createdAt) return '접수일시 미상';
+    try {
+      if (typeof createdAt?.toDate === 'function') {
+        return format(createdAt.toDate(), 'yyyy. MM. dd HH:mm');
+      }
+      if (createdAt?.seconds) {
+        return format(new Date(createdAt.seconds * 1000), 'yyyy. MM. dd HH:mm');
+      }
+      const d = new Date(createdAt);
+      if (!isNaN(d.getTime())) {
+        return format(d, 'yyyy. MM. dd HH:mm');
+      }
+      return String(createdAt);
+    } catch {
+      return '접수일시 미상';
+    }
+  };
+
+  // Copy to clipboard helper
+  const handleCopy = (text: string, label: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      setToastMessage(`${label}이(가) 클립보드에 복사되었습니다.`);
+    }).catch(() => {
+      setToastMessage(`복사 실패: 직접 복사해 주세요.`);
+    });
+  };
+
+  // Delete message handler without window.confirm (works inside iframes)
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget?.id) return;
+    setIsDeleting(true);
+    setErrorMessage(null);
+    try {
+      await deleteDoc(doc(db, 'messages', deleteTarget.id));
+      setToastMessage(`'${deleteTarget.name}' 님의 신청 내역이 삭제되었습니다.`);
+      setDeleteTarget(null);
+    } catch (err: any) {
+      console.error('Error deleting message:', err);
+      setErrorMessage(`삭제 실패: ${err?.message || '권한이 없거나 네트워크 오류가 발생했습니다.'}`);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Statistics
+  const freeSessionCount = messages.filter(m => (m.subject || '').includes('무료 세션')).length;
+  const otherCount = messages.length - freeSessionCount;
+
+  // Filter & Search
+  const filteredMessages = messages.filter(msg => {
+    const isFree = (msg.subject || '').includes('무료 세션');
+    if (filterType === 'free_session' && !isFree) return false;
+    if (filterType === 'other' && isFree) return false;
+
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase();
+    const nameMatch = (msg.name || '').toLowerCase().includes(term);
+    const emailMatch = (msg.email || '').toLowerCase().includes(term);
+    const phoneMatch = (msg.phone || '').toLowerCase().includes(term);
+    const subjectMatch = (msg.subject || '').toLowerCase().includes(term);
+    const contentMatch = (msg.message || '').toLowerCase().includes(term);
+    return nameMatch || emailMatch || phoneMatch || subjectMatch || contentMatch;
+  });
+
+  return (
+    <div id="admin" className="min-h-screen bg-[#F8F6F2] text-stone-900 py-16 px-4 sm:px-6 lg:px-8 border-t-4 border-brand-primary">
+      {/* Toast Notification */}
       <AnimatePresence>
-        {showThankYouModal && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
-            {/* Backdrop */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setShowThankYouModal(false)}
-              className="absolute inset-0 bg-brand-ink/60 backdrop-blur-sm cursor-pointer"
-              aria-hidden="true"
-            />
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-6 right-6 z-50 bg-stone-900 text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 text-sm font-medium border border-stone-700"
+          >
+            <CheckCircle size={18} className="text-emerald-400 shrink-0" />
+            <span>{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            {/* Modal Card */}
+      {/* Delete Confirmation Modal (In-App dialog, no window.confirm) */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="thank-you-popup-title"
-              initial={{ opacity: 0, scale: 0.92, y: 16 }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 16 }}
-              transition={{ type: "spring", damping: 25, stiffness: 320 }}
-              className="relative bg-white rounded-3xl sm:rounded-[36px] p-7 sm:p-10 md:p-12 max-w-lg w-full shadow-2xl border border-brand-ink/10 text-center z-10 overflow-hidden"
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-7 border border-stone-200"
             >
-              {/* Close (X) button */}
-              <button
-                type="button"
-                onClick={() => setShowThankYouModal(false)}
-                className="absolute top-5 right-5 sm:top-6 sm:right-6 p-2 rounded-full text-brand-ink/40 hover:text-brand-ink hover:bg-brand-bg transition-colors cursor-pointer"
-                aria-label="팝업 닫기"
-              >
-                <X size={20} />
-              </button>
-
-              {/* Icon badge */}
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <Check size={36} strokeWidth={2.5} className="text-brand-primary" />
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center shrink-0 border border-red-100">
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-stone-900">신청 내역 삭제 확인</h3>
+                  <p className="text-sm text-stone-500 mt-1">삭제된 내역은 영구적으로 제거되며 복구할 수 없습니다.</p>
+                </div>
               </div>
 
-              {/* Title */}
-              <h3 
-                id="thank-you-popup-title"
-                className="text-xl sm:text-2xl font-serif font-bold text-brand-ink mb-4 leading-snug break-keep"
-              >
-                30분 무료 세션 신청이 접수되었습니다.
-              </h3>
-
-              {/* Message */}
-              <div className="space-y-2 text-base sm:text-lg font-sans text-brand-ink/80 leading-relaxed mb-6 break-keep">
-                <p>
-                  <span className="font-semibold text-brand-primary">
-                    {submittedName || '신청자'}
-                  </span>
-                  님의 소중한 고민을 세심하게 읽어보겠습니다.
-                </p>
-                <p className="text-sm sm:text-base text-brand-ink/65">
-                  영업일 기준 48시간 이내에 세션 일정을 안내해 드리겠습니다.
-                </p>
+              <div className="bg-stone-50 rounded-xl p-4 border border-stone-200/80 mb-5 text-sm space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-500 font-medium">신청자:</span>
+                  <span className="font-bold text-stone-900 text-base">{deleteTarget.name} 님</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-500 font-medium">신청 프로그램:</span>
+                  <span className="font-semibold text-brand-primary">{deleteTarget.subject || '30분 무료 세션 신청'}</span>
+                </div>
+                {deleteTarget.phone && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-stone-500 font-medium">연락처:</span>
+                    <span className="font-mono text-stone-900 font-semibold">{deleteTarget.phone}</span>
+                  </div>
+                )}
+                {deleteTarget.email && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-stone-500 font-medium">이메일:</span>
+                    <span className="text-stone-900">{deleteTarget.email}</span>
+                  </div>
+                )}
               </div>
 
-              {/* Privacy badge */}
-              <div className="bg-brand-bg/75 rounded-2xl p-4 mb-8 text-xs sm:text-sm text-brand-ink/60 flex items-center justify-center gap-2">
-                <Shield size={15} className="text-[#ab8040] shrink-0" />
-                <span>남겨주신 대화 주제와 개인정보는 비밀보장 원칙에 따라 안전하게 보호됩니다.</span>
-              </div>
+              {errorMessage && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-medium">
+                  {errorMessage}
+                </div>
+              )}
 
-              {/* Confirm / Close Button */}
-              <button
-                type="button"
-                onClick={() => setShowThankYouModal(false)}
-                className="w-full bg-brand-primary text-white py-4 rounded-2xl text-base sm:text-lg font-medium hover:opacity-90 transition-all duration-300 shadow-lg shadow-brand-primary/20 cursor-pointer"
-              >
-                확인
-              </button>
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => {
+                    setDeleteTarget(null);
+                    setErrorMessage(null);
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-colors cursor-pointer"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold bg-red-600 hover:bg-red-700 text-white shadow-sm flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>삭제 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} />
+                      <span>삭제 확정</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-    </section>
-  );
-};
 
-// --- Admin CMS Components ---
-
-const AdminDashboard = ({ posts, credentials, messages, onLogout }: { posts: Post[], credentials: Credential[], messages: ContactMessage[], onLogout: () => void }) => {
-  const [activeTab, setActiveTab] = useState<'posts' | 'credentials' | 'messages'>('posts');
-  const [editingPost, setEditingPost] = useState<Partial<Post> | null>(null);
-  const [editingCred, setEditingCred] = useState<Partial<Credential> | null>(null);
-
-  const handleSavePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingPost) return;
-    
-    const postData = {
-      ...editingPost,
-      publishedAt: editingPost.publishedAt || new Date().toISOString(),
-      slug: editingPost.slug || editingPost.title?.toLowerCase().replace(/ /g, '-') || ''
-    };
-
-    if (editingPost.id) {
-      await updateDoc(doc(db, 'posts', editingPost.id), postData);
-    } else {
-      await addDoc(collection(db, 'posts'), postData);
-    }
-    setEditingPost(null);
-  };
-
-  const handleSaveCred = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingCred) return;
-
-    if (editingCred.id) {
-      await updateDoc(doc(db, 'credentials', editingCred.id), editingCred);
-    } else {
-      await addDoc(collection(db, 'credentials'), { ...editingCred, order: credentials.length });
-    }
-    setEditingCred(null);
-  };
-
-  const handleSeedData = async () => {
-    if (!window.confirm("This will add sample posts and credentials. Continue?")) return;
-    try {
-      for (const post of SEED_POSTS) {
-        await addDoc(collection(db, 'posts'), post);
-      }
-      for (const cred of SEED_CREDS) {
-        await addDoc(collection(db, 'credentials'), cred);
-      }
-      alert("Data seeded successfully!");
-    } catch (err) {
-      console.error(err);
-      alert("Error seeding data. Check console.");
-    }
-  };
-
-  return (
-    <div id="admin" className="min-h-screen bg-brand-ink text-brand-bg py-32 px-6">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-12">
-          <div className="flex items-center gap-6">
-            <h2 className="text-4xl font-serif italic">Admin Dashboard</h2>
-            <button 
-              onClick={handleSeedData}
-              className="text-xs bg-brand-bg/10 hover:bg-brand-bg/20 px-4 py-2 rounded-full transition-colors"
-            >
-              Seed Sample Data
-            </button>
-          </div>
-          <button onClick={onLogout} className="flex items-center gap-2 text-sm uppercase tracking-widest opacity-60 hover:opacity-100">
-            <LogOut size={16} /> Exit Admin
-          </button>
-        </div>
+        {/* Header Bar */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-stone-100">
+            <div>
+              <div className="flex flex-wrap items-center gap-3 mb-2">
+                <span className="bg-brand-primary/10 text-brand-primary text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  ADMIN ONLY
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full font-medium border border-emerald-100">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  실시간 연동 중
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900 tracking-tight">
+                신청 및 고객 문의 관리
+              </h1>
+              <p className="text-sm text-stone-600 mt-1.5 font-sans leading-relaxed">
+                웹사이트를 통해 고객이 신청한 30분 무료 세션 및 프로그램 문의 내역을 실시간으로 확인하고 관리합니다.
+              </p>
+            </div>
 
-        <div className="flex gap-8 mb-12 border-b border-brand-bg/10">
-          {(['posts', 'credentials', 'messages'] as const).map(tab => (
-            <button 
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`pb-4 text-sm uppercase tracking-widest font-bold transition-colors ${activeTab === tab ? 'text-brand-primary border-b-2 border-brand-primary' : 'opacity-40'}`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === 'posts' && (
-          <div className="space-y-8">
-            <button 
-              onClick={() => setEditingPost({ title: '', content: '', excerpt: '', category: 'Leadership', imageUrl: '' })}
-              className="bg-brand-primary text-white px-6 py-3 rounded-xl flex items-center gap-2 text-sm font-bold uppercase tracking-widest"
-            >
-              <Plus size={18} /> New Insight
-            </button>
-
-            <div className="grid gap-4">
-              {posts.map(post => (
-                <div key={post.id} className="bg-brand-bg/5 p-6 rounded-2xl flex justify-between items-center border border-brand-bg/10">
-                  <div>
-                    <h4 className="text-xl font-sans font-semibold">{post.title}</h4>
-                    <p className="text-xs opacity-40 uppercase tracking-widest mt-1">{post.category} • {format(new Date(post.publishedAt), 'MMM d, yyyy')}</p>
-                  </div>
-                  <div className="flex gap-4">
-                    <button onClick={() => setEditingPost(post)} className="p-2 hover:text-brand-primary transition-colors"><Edit2 size={18} /></button>
-                    <button onClick={() => deleteDoc(doc(db, 'posts', post.id!))} className="p-2 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center gap-3 self-start md:self-auto">
+              <button
+                type="button"
+                onClick={onLogout}
+                className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200/80 px-4 py-2.5 rounded-xl transition-all cursor-pointer border border-stone-200"
+              >
+                <LogOut size={16} />
+                <span>관리자 로그아웃</span>
+              </button>
             </div>
           </div>
-        )}
 
-        {activeTab === 'credentials' && (
-          <div className="space-y-8">
-            <button 
-              onClick={() => setEditingCred({ title: '', organization: '', year: '' })}
-              className="bg-brand-primary text-white px-6 py-3 rounded-xl flex items-center gap-2 text-sm font-bold uppercase tracking-widest"
-            >
-              <Plus size={18} /> Add Credential
-            </button>
+          {/* Stats Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6">
+            <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/60">
+              <p className="text-xs font-bold text-stone-500 uppercase tracking-wider">전체 접수 내역</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-3xl font-serif font-bold text-stone-900">{messages.length}</span>
+                <span className="text-xs font-medium text-stone-500">건</span>
+              </div>
+            </div>
 
-            <div className="grid gap-4">
-              {credentials.map(cred => (
-                <div key={cred.id} className="bg-brand-bg/5 p-6 rounded-2xl flex justify-between items-center border border-brand-bg/10">
-                  <div>
-                    <h4 className="text-xl font-sans font-semibold">{cred.title}</h4>
-                    <p className="text-xs opacity-40 uppercase tracking-widest mt-1">{cred.organization} • {cred.year}</p>
-                  </div>
-                  <div className="flex gap-4">
-                    <button onClick={() => setEditingCred(cred)} className="p-2 hover:text-brand-primary transition-colors"><Edit2 size={18} /></button>
-                    <button onClick={() => deleteDoc(doc(db, 'credentials', cred.id!))} className="p-2 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
-                  </div>
-                </div>
-              ))}
+            <div className="bg-rose-50/70 rounded-2xl p-4 border border-rose-100">
+              <p className="text-xs font-bold text-rose-800 uppercase tracking-wider">30분 무료 세션 신청</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-3xl font-serif font-bold text-brand-primary">{freeSessionCount}</span>
+                <span className="text-xs font-medium text-rose-700">건</span>
+              </div>
+            </div>
+
+            <div className="bg-blue-50/70 rounded-2xl p-4 border border-blue-100">
+              <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">기타 프로그램 / 문의</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-3xl font-serif font-bold text-blue-900">{otherCount}</span>
+                <span className="text-xs font-medium text-blue-700">건</span>
+              </div>
             </div>
           </div>
-        )}
+        </div>
 
-        {activeTab === 'messages' && (
-          <div className="space-y-6">
-            <div className="grid gap-6">
-              {messages.length === 0 ? (
-                <p className="opacity-40 italic">No messages received yet.</p>
-              ) : (
-                messages.map(msg => (
-                  <div key={msg.id} className="bg-brand-bg/5 p-8 rounded-3xl border border-brand-bg/10">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h4 className="text-xl font-sans font-semibold mb-1">{msg.subject}</h4>
-                        <p className="text-sm opacity-60 flex flex-wrap items-center gap-1.5">
-                          <span>From: <span className="text-brand-primary font-medium">{msg.name}</span></span>
-                          {msg.email && <span>({msg.email})</span>}
-                          {msg.phone && (
-                            <span className="text-xs bg-brand-primary/10 text-brand-primary px-2.5 py-0.5 rounded-full font-mono">
-                              연락처: {msg.phone}
-                            </span>
-                          )}
-                        </p>
+        {/* Filter and Search Bar */}
+        <div className="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-1.5 p-1 bg-stone-100 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setFilterType('all')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                filterType === 'all'
+                  ? 'bg-white text-stone-900 shadow-sm'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              전체 ({messages.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterType('free_session')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                filterType === 'free_session'
+                  ? 'bg-brand-primary text-white shadow-sm'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              30분 무료 세션 ({freeSessionCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterType('other')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                filterType === 'other'
+                  ? 'bg-stone-800 text-white shadow-sm'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              기타 문의 ({otherCount})
+            </button>
+          </div>
+
+          {/* Search Input */}
+          <div className="relative flex-1 sm:max-w-xs">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
+            <input
+              type="text"
+              placeholder="이름, 연락처, 이메일, 내용 검색..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-8 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:bg-white transition-all"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-0.5 cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Submissions List */}
+        {filteredMessages.length === 0 ? (
+          <div className="bg-white rounded-3xl p-16 text-center border border-stone-200 shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-stone-100 text-stone-400 flex items-center justify-center mx-auto mb-4">
+              <MessageSquare size={28} />
+            </div>
+            <h3 className="text-lg font-bold text-stone-800 mb-1">
+              {messages.length === 0 ? '현재 접수된 신청 내역이 없습니다.' : '일치하는 검색 결과가 없습니다.'}
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-500 max-w-sm mx-auto">
+              {messages.length === 0
+                ? '고객이 웹사이트에서 30분 무료 세션을 신청하면 여기에 실시간으로 표시됩니다.'
+                : '검색어를 변경하거나 필터를 초기화해 보세요.'}
+            </p>
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="mt-4 text-xs font-semibold text-brand-primary hover:underline cursor-pointer"
+              >
+                검색어 초기화
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {filteredMessages.map((msg) => {
+              const formattedDate = formatTimestamp(msg.createdAt);
+              const isFreeSession = (msg.subject || '').includes('무료 세션');
+
+              return (
+                <div
+                  key={msg.id}
+                  className="bg-white rounded-2xl p-6 sm:p-7 border border-stone-200/90 shadow-sm hover:shadow-md transition-all relative overflow-hidden"
+                >
+                  {/* Left accent strip for free session */}
+                  {isFreeSession && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-primary" />
+                  )}
+
+                  {/* Top Bar: Badge, Date, Delete Button */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <span
+                        className={`text-xs font-bold px-3 py-1 rounded-full ${
+                          isFreeSession
+                            ? 'bg-rose-100 text-rose-900 border border-rose-200'
+                            : 'bg-stone-100 text-stone-800 border border-stone-200'
+                        }`}
+                      >
+                        {msg.subject || '30분 무료 세션 신청'}
+                      </span>
+                      <span className="text-xs text-stone-600 font-semibold flex items-center gap-1.5 bg-stone-50 px-2.5 py-1 rounded-md border border-stone-200/80 font-mono">
+                        <Clock size={13} className="text-stone-500" />
+                        {formattedDate}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTarget(msg)}
+                        className="flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+                        title="신청 내역 삭제"
+                      >
+                        <Trash2 size={14} />
+                        <span>삭제</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Applicant Details */}
+                  <div className="pt-4 space-y-4">
+                    {/* Name */}
+                    <div>
+                      <h3 className="text-xl sm:text-2xl font-serif font-bold text-stone-900 flex items-center gap-2">
+                        <span>{msg.name}</span>
+                        <span className="text-xs font-sans font-normal text-stone-500 bg-stone-100 px-2 py-0.5 rounded">
+                          신청자
+                        </span>
+                      </h3>
+                    </div>
+
+                    {/* Contact Information Box (High Contrast) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-stone-50 rounded-xl p-4 border border-stone-200/80">
+                      {/* Phone */}
+                      <div className="flex items-center justify-between gap-3 bg-white p-3 rounded-lg border border-stone-200">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
+                            <Phone size={16} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">연락처</p>
+                            <p className="text-sm sm:text-base font-mono font-bold text-stone-900 truncate">
+                              {msg.phone || '미기재'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {msg.phone && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <a
+                              href={`tel:${msg.phone}`}
+                              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-md transition-colors border border-emerald-100"
+                            >
+                              통화
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(msg.phone || '', '전화번호')}
+                              className="p-1.5 text-stone-500 hover:text-stone-800 rounded-md hover:bg-stone-100 transition-colors cursor-pointer"
+                              title="전화번호 복사"
+                            >
+                              <Copy size={14} />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <button onClick={() => deleteDoc(doc(db, 'messages', msg.id!))} className="p-2 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
+
+                      {/* Email */}
+                      <div className="flex items-center justify-between gap-3 bg-white p-3 rounded-lg border border-stone-200">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0 border border-indigo-100">
+                            <Mail size={16} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">이메일</p>
+                            <p className="text-xs sm:text-sm font-semibold text-stone-900 truncate">
+                              {msg.email || '미기재'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {msg.email && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <a
+                              href={`mailto:${msg.email}`}
+                              className="text-xs font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-md transition-colors border border-indigo-100"
+                            >
+                              메일 작성
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(msg.email || '', '이메일')}
+                              className="p-1.5 text-stone-500 hover:text-stone-800 rounded-md hover:bg-stone-100 transition-colors cursor-pointer"
+                              title="이메일 복사"
+                            >
+                              <Copy size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="bg-brand-bg/5 p-4 rounded-xl text-sm leading-relaxed whitespace-pre-wrap">
-                      {msg.message}
-                    </div>
-                    <p className="text-[10px] uppercase tracking-widest opacity-30 mt-4">
-                      Received: {msg.createdAt ? format(new Date((msg.createdAt as any).seconds * 1000), 'MMM d, yyyy HH:mm') : 'Unknown'}
-                    </p>
+
+                    {/* Message Body */}
+                    {msg.message && (
+                      <div className="space-y-1.5">
+                        <span className="text-xs font-bold text-stone-600 uppercase tracking-wider flex items-center gap-1.5">
+                          <MessageSquare size={13} className="text-stone-500" />
+                          <span>신청 사유 및 문의 메시지</span>
+                        </span>
+                        <div className="bg-stone-50/80 p-4 sm:p-5 rounded-xl border border-stone-200 text-sm sm:text-base leading-relaxed text-stone-800 whitespace-pre-wrap font-sans">
+                          {msg.message}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ))
-              )}
-            </div>
+                </div>
+              );
+            })}
           </div>
         )}
-
-        {/* Modals */}
-        <AnimatePresence>
-          {editingPost && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-brand-ink/90 backdrop-blur-sm">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="bg-brand-bg text-brand-ink w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[40px] p-12"
-              >
-                <div className="flex justify-between items-center mb-8">
-                  <h3 className="text-3xl font-serif italic">{editingPost.id ? 'Edit' : 'New'} Insight</h3>
-                  <button onClick={() => setEditingPost(null)}><X /></button>
-                </div>
-                <form onSubmit={handleSavePost} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-xs uppercase tracking-widest font-bold opacity-50">Title</label>
-                      <input 
-                        required
-                        type="text" 
-                        value={editingPost.title}
-                        onChange={e => setEditingPost({...editingPost, title: e.target.value})}
-                        className="w-full bg-brand-ink/5 border-none rounded-xl px-4 py-3 outline-none" 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs uppercase tracking-widest font-bold opacity-50">Category</label>
-                      <input 
-                        required
-                        type="text" 
-                        value={editingPost.category}
-                        onChange={e => setEditingPost({...editingPost, category: e.target.value})}
-                        className="w-full bg-brand-ink/5 border-none rounded-xl px-4 py-3 outline-none" 
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-widest font-bold opacity-50">Image URL</label>
-                    <input 
-                      type="text" 
-                      value={editingPost.imageUrl}
-                      onChange={e => setEditingPost({...editingPost, imageUrl: e.target.value})}
-                      className="w-full bg-brand-ink/5 border-none rounded-xl px-4 py-3 outline-none" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-widest font-bold opacity-50">Excerpt</label>
-                    <textarea 
-                      required
-                      rows={2}
-                      value={editingPost.excerpt}
-                      onChange={e => setEditingPost({...editingPost, excerpt: e.target.value})}
-                      className="w-full bg-brand-ink/5 border-none rounded-xl px-4 py-3 outline-none resize-none" 
-                    ></textarea>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-widest font-bold opacity-50">Content (Markdown)</label>
-                    <textarea 
-                      required
-                      rows={10}
-                      value={editingPost.content}
-                      onChange={e => setEditingPost({...editingPost, content: e.target.value})}
-                      className="w-full bg-brand-ink/5 border-none rounded-xl px-4 py-3 outline-none font-mono text-sm" 
-                    ></textarea>
-                  </div>
-                  <button className="w-full bg-brand-primary text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-brand-ink transition-colors">
-                    Save Insight
-                  </button>
-                </form>
-              </motion.div>
-            </div>
-          )}
-
-          {editingCred && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-brand-ink/90 backdrop-blur-sm">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="bg-brand-bg text-brand-ink w-full max-w-xl rounded-[40px] p-12"
-              >
-                <div className="flex justify-between items-center mb-8">
-                  <h3 className="text-3xl font-serif italic">{editingCred.id ? 'Edit' : 'New'} Credential</h3>
-                  <button onClick={() => setEditingCred(null)}><X /></button>
-                </div>
-                <form onSubmit={handleSaveCred} className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-widest font-bold opacity-50">Title</label>
-                    <input 
-                      required
-                      type="text" 
-                      value={editingCred.title}
-                      onChange={e => setEditingCred({...editingCred, title: e.target.value})}
-                      className="w-full bg-brand-ink/5 border-none rounded-xl px-4 py-3 outline-none" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-widest font-bold opacity-50">Organization</label>
-                    <input 
-                      required
-                      type="text" 
-                      value={editingCred.organization}
-                      onChange={e => setEditingCred({...editingCred, organization: e.target.value})}
-                      className="w-full bg-brand-ink/5 border-none rounded-xl px-4 py-3 outline-none" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-widest font-bold opacity-50">Year</label>
-                    <input 
-                      required
-                      type="text" 
-                      value={editingCred.year}
-                      onChange={e => setEditingCred({...editingCred, year: e.target.value})}
-                      className="w-full bg-brand-ink/5 border-none rounded-xl px-4 py-3 outline-none" 
-                    />
-                  </div>
-                  <button className="w-full bg-brand-primary text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-brand-ink transition-colors">
-                    Save Credential
-                  </button>
-                </form>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
       </div>
     </div>
   );
@@ -1884,7 +1976,7 @@ export default function App() {
           </main>
         )}
 
-        {isAdmin && <AdminDashboard posts={posts} credentials={credentials} messages={messages} onLogout={logout} />}
+        {isAdmin && <AdminDashboard messages={messages} onLogout={logout} />}
 
         <footer className="py-12 bg-brand-bg border-t border-brand-ink/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col md:flex-row justify-between items-center gap-8">

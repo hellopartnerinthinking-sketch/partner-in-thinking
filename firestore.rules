@@ -1,22 +1,6 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
-    // Collection: posts
-    // Fields: title, content, excerpt, category, imageUrl, publishedAt, slug
-    //
-    // Collection: credentials
-    // Fields: title, organization, year, order
-    //
-    // Collection: messages
-    // Fields: name, email, subject, message, createdAt
-    //
-    // Collection: settings
-    // Fields: heroTitle, heroSubtitle, aboutText, primaryColor, fontFamily
-    // ===============================================================
-
     // Helper Functions
     function isAuthenticated() {
       return request.auth != null;
@@ -24,8 +8,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && (
-        request.auth.token.email == "wonyoung.park@gmail.com" && 
-        request.auth.token.email_verified == true
+        request.auth.token.email.lower() == "wonyoung.park@gmail.com"
       );
     }
 
@@ -37,7 +20,6 @@ service cloud.firestore {
 
     function isValidMessage(data) {
       return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.email is string && data.email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") &&
              data.message is string && data.message.size() > 0 && data.message.size() < 5000;
     }
 
