@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
+interface Window {
+  gtag?: (...args: any[]) => void;
+  dataLayer?: any[];
+}
+
 declare module '*.jpg' {
   const src: string;
   export default src;
