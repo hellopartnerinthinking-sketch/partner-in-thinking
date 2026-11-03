@@ -208,5 +208,34 @@ export const DETAILED_PROGRAMS: DetailedProgram[] = [
       }
     ],
     image: "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1000&auto=format&fit=crop"
+  },
+  {
+    id: "transition-next-chapter",
+    title: "Career & Next Chapter (커리어 & 넥스트 챕터)",
+    category: "Balance",
+    totalDuration: "3~5시간",
+    sessionsCount: "1:1 (3~5회)",
+    shortSummary: "수십 년간 헌신했던 조직을 벗어난 이후가 막연하거나, 축적된 경험과 지혜를 펼칠 다음 무대를 찾고 있을 때",
+    fullDescription: "직함과 회사의 울타리를 넘어, 온전한 나로서의 지적 자산과 고유한 영향력을 재정의합니다. 퇴임 후의 공허감을 예방하고 자문·연구·독립 프로젝트 등 주도적이고 품격 있는 제2의 삶 로드맵을 선명하게 설계합니다.",
+    tailoringNotes: [
+      "임원 퇴임 전후 시점 및 개인별 생애 주기에 맞추어 1:1 맞춤형으로 기획·진행됩니다.",
+      "단순한 은퇴 준비를 넘어, 축적된 무형의 전문성을 어떤 형태(자문, 코칭, 저술, 독립 사업 등)로 사회에 환원하고 지속할지 구체화합니다."
+    ],
+    sessions: [
+      {
+        sessionNum: "웰컴 세션 & 1회",
+        duration: "90~120분",
+        recommendation: "얼라인먼트",
+        title: "직함 분리(Uncoupling) 및 지적 자산 구조화",
+        description: "수십 년간 축적해 온 핵심 전문성과 경험을 객관적으로 조망하고, 조직의 명함을 뗀 본연의 핵심 강점과 가치를 재발견합니다."
+      },
+      {
+        sessionNum: "2회~5회",
+        duration: "회당 60분",
+        title: "1:1 맞춤 코칭 세션",
+        description: "공허감과 정체성 혼란을 선제적으로 해소하는 심리적 안전망 구축, 퇴임 후 시간·관계·에너지의 우선순위 재정렬, 자문·사회 공헌·독립 프로젝트 등 지속 가능한 활동 포트폴리오 기획, 그리고 주도적인 제2의 삶을 완성하는 구체적 실천 로드맵 확립"
+      }
+    ],
+    image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1000&auto=format&fit=crop"
   }
 ];

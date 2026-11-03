@@ -496,27 +496,18 @@ const Program = ({
       koreanTitle: "성과 & 의사 결정",
       englishTitle: "Performance & Decision Alignment",
       relevance: "할 일은 쏟아지고 불확실성은 높은데, 지금 어떤 결정부터 내려야 할지 막막할 때",
-      outcome: "명확한 기준에 따라 우선순위를 정하고 가장 중요한 과제에 몰입하게 됩니다. 나만의 업무 가치와 데이터를 바탕으로 의사결정의 확신을 가질 수 있습니다.",
+      outcome: "내가 쌓아온 삶과 리더십의 고유한 가치를 기준으로 우선순위를 정하고 가장 중요한 과제에 몰입하게 됩니다. 흔들림 없는 내면의 기준을 바탕으로, 나다운 의사결정의 확신을 가질 수 있습니다.",
       image: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=1000&auto=format&fit=crop",
       slug: "focus-alignment"
     },
     {
-      id: "team-dynamics",
-      koreanTitle: "조직 & 대인 관계",
-      englishTitle: "Team Dynamics & Alignment",
-      relevance: "팀원 간 갈등, 모호한 R&R, 타 부서와의 상극으로 조직 성과가 정체되어 있을 때",
-      outcome: "관계 속 반복되는 충돌 패턴의 원인을 분석해 원활한 협업 체계를 구축합니다. 명확한 역할 정의와 신뢰 형성을 통해 팀 시너지를 극대화하고, 건강한 조직 문화를 완성합니다.",
+      id: "team-communication",
+      koreanTitle: "조직 & 커뮤니케이션",
+      englishTitle: "Team Dynamics & Communication",
+      relevance: "팀원 간 갈등과 모호한 역할, 또는 민감하고 난처한 대화로 인해 조직 성과가 정체될 때",
+      outcome: "관계 속 반복되는 충돌 패턴을 분석하고 명확한 대화 구조를 정립합니다. 어려운 피드백 상황에서도 관계를 해치지 않으며, 심리적 안전감과 건강한 협업 시너지를 완성합니다.",
       image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1000&auto=format&fit=crop",
       slug: "relational-dynamics"
-    },
-    {
-      id: "impactful-communication",
-      koreanTitle: "커뮤니케이션",
-      englishTitle: "Impactful Communication",
-      relevance: "의도와 다르게 전달되는 지시, 성과 저고자 면담 등 난처한 대화가 부담스러울 때",
-      outcome: "대화의 본질을 정립하여 핵심이 명확히 전달되는 대화 구조를 터득합니다. 어려운 피드백 상황에서도 관계를 해치지 않고 솔루션을 끌어내는 심리적 주도권을 확보합니다.",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1000&auto=format&fit=crop",
-      slug: "thinking-conflict"
     },
     {
       id: "inner-order",
@@ -528,13 +519,13 @@ const Program = ({
       slug: "core-value"
     },
     {
-      id: "authentic-leadership",
-      koreanTitle: "리더십 & 커리어",
-      englishTitle: "Leadership & Career",
-      relevance: "나만의 리더십 스타일이 모호하거나, 리더로서의 다음 커리어 방향이 고민될 때",
-      outcome: "자신의 핵심 강점을 재발견하여 고유한 리더십 정체성과 브랜딩을 확립합니다. 단기적 역할을 넘어 조직 내 영향력을 확장하고 장기적인 리더십 비전 로드맵을 선명하게 설계합니다.",
-      image: "https://images.unsplash.com/photo-1507537297725-24a1c029d3ca?q=80&w=1000&auto=format&fit=crop",
-      slug: "organizational-politics"
+      id: "career-next-chapter",
+      koreanTitle: "커리어 & 넥스트 챕터",
+      englishTitle: "Career & Next Chapter",
+      relevance: "리더로서의 다음 커리어 방향이 고민되거나, 조직을 벗어난 이후의 삶과 새로운 무대를 준비할 때",
+      outcome: "현직에서의 영향력 확장을 넘어, 직함 이후의 온전한 나로서 지적 자산과 고유 가치를 재정의합니다. 조직 안팎의 불확실성을 걷어내고 주도적이고 품격 있는 커리어 및 제2의 삶 로드맵을 선명하게 설계합니다.",
+      image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1000&auto=format&fit=crop",
+      slug: "transition-next-chapter"
     }
   ];
 
@@ -549,7 +540,7 @@ const Program = ({
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <span className="text-xs uppercase tracking-[0.3em] text-brand-primary mb-6 block font-bold">5 Core Coaching Pillars</span>
+            <span className="text-xs uppercase tracking-[0.3em] text-brand-primary mb-6 block font-bold">4 Core Coaching Pillars</span>
             <h2 className="text-4xl md:text-6xl font-serif italic text-brand-ink mb-12">Programs</h2>
             
             <div className="max-w-3xl space-y-4 text-brand-ink/80 text-lg leading-relaxed break-keep">
@@ -1025,10 +1016,9 @@ const Credentials = ({ credentials }: { credentials: Credential[] }) => {
 
 const AVAILABLE_PROGRAMS = [
   "성과 & 의사 결정 (Performance & Decision Alignment)",
-  "조직 & 대인 관계 (Team Dynamics & Alignment)",
-  "커뮤니케이션 (Impactful Communication)",
+  "조직 & 커뮤니케이션 (Team Dynamics & Communication)",
   "멘탈 & 자기 관리 (Inner Order & Mental Resilience)",
-  "리더십 & 커리어 (Leadership & Career)",
+  "커리어 & 넥스트 챕터 (Career & Next Chapter)",
   "1:1 Coaching",
   "기타"
 ];

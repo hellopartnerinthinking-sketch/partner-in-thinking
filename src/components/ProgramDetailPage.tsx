@@ -42,10 +42,9 @@ export default function ProgramDetailPage({
     // Map the selected program ID back to the value expected in the contact form
     let selectVal = "1:1 Coaching";
     if (activeProg.id === "focus-alignment" || activeProg.id === "critical-framing") selectVal = "성과 & 의사 결정 (Performance & Decision Alignment)";
-    else if (activeProg.id === "relational-dynamics") selectVal = "조직 & 대인 관계 (Team Dynamics & Alignment)";
-    else if (activeProg.id === "thinking-conflict") selectVal = "커뮤니케이션 (Impactful Communication)";
+    else if (activeProg.id === "relational-dynamics" || activeProg.id === "thinking-conflict") selectVal = "조직 & 커뮤니케이션 (Team Dynamics & Communication)";
     else if (activeProg.id === "core-value") selectVal = "멘탈 & 자기 관리 (Inner Order & Mental Resilience)";
-    else if (activeProg.id === "organizational-politics") selectVal = "리더십 & 커리어 (Leadership & Career)";
+    else if (activeProg.id === "organizational-politics" || activeProg.id === "transition-next-chapter") selectVal = "커리어 & 넥스트 챕터 (Career & Next Chapter)";
 
     onNavigateSection('#contact', selectVal);
   };
