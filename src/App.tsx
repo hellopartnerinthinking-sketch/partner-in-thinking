@@ -10,7 +10,7 @@ import {
   Plus, Edit2, Trash2, LogIn, LogOut, ChevronRight, ChevronDown, Check,
   Award, BookOpen, MessageSquare, User, Settings,
   Layout, Target, Scale, Shield, Brain,
-  Phone, Calendar, Clock, Copy, Search, Filter, AlertTriangle, CheckCircle, RefreshCw
+  Phone, Calendar, Clock, Copy, Search, Filter, AlertTriangle, CheckCircle, RefreshCw, Download
 } from 'lucide-react';
 import { 
   collection, query, orderBy, onSnapshot, addDoc, 
@@ -1517,6 +1517,15 @@ const AdminDashboard = ({ messages, onLogout }: { messages: ContactMessage[], on
             </div>
 
             <div className="flex items-center gap-3 self-start md:self-auto">
+              <a
+                href="/partner-in-thinking-code.zip"
+                download="partner-in-thinking-code.zip"
+                className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-brand-primary hover:text-white bg-brand-primary/10 hover:bg-brand-primary px-4 py-2.5 rounded-xl transition-all cursor-pointer border border-brand-primary/20 shadow-xs"
+                title="GitHub에 올릴 수 있는 전체 소스코드 압축파일 다운로드"
+              >
+                <Download size={16} />
+                <span>코드 다운로드 (.zip)</span>
+              </a>
               <button
                 type="button"
                 onClick={onLogout}
