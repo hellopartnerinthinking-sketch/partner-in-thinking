@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://partnerinthinking.com/sitemap.xml
