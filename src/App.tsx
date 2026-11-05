@@ -351,7 +351,7 @@ const Hero = ({ onNavigateContact }: { onNavigateContact?: () => void }) => (
           </p>
         </div>
         
-        <div className="space-y-1 text-lg md:text-xl font-sans text-brand-ink/80 leading-snug mb-16">
+        <div className="space-y-1 text-lg md:text-xl font-sans text-brand-ink/80 leading-snug">
           <p>복잡한 세상 속,</p>
           <p>얽힌 머릿속과 마음을</p>
           <p>체계적으로 구조화합니다.</p>
@@ -359,22 +359,6 @@ const Hero = ({ onNavigateContact }: { onNavigateContact?: () => void }) => (
           <p>당신의 일상을 정돈하고,</p>
           <p>다시 충만한 삶으로 나아가도록 돕는</p>
           <p>사고 파트너입니다.</p>
-        </div>
-
-        <div className="flex flex-wrap gap-6">
-          <a 
-            href="#contact" 
-            onClick={(e) => {
-              trackCtaClick('사고 파트너와 1:1 30분 무료 세션 신청하기', 'hero_section');
-              if (onNavigateContact) {
-                e.preventDefault();
-                onNavigateContact();
-              }
-            }}
-            className="bg-brand-primary text-white px-8 sm:px-10 py-4 rounded-full flex items-center gap-3 hover:opacity-90 transition-all duration-300 text-base sm:text-lg font-medium shadow-lg shadow-brand-primary/20"
-          >
-            사고 파트너와 1:1 30분 무료 세션 신청하기 <ArrowRight size={20} />
-          </a>
         </div>
       </motion.div>
 
