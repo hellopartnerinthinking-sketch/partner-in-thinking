@@ -4,1978 +4,2155 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Menu, X, ArrowRight, Mail, Linkedin, ExternalLink, 
-  Plus, Edit2, Trash2, LogIn, LogOut, ChevronRight, ChevronDown, Check,
-  Award, BookOpen, MessageSquare, User, Settings,
-  Layout, Target, Scale, Shield, Brain,
-  Phone, Calendar, Clock, Copy, Search, Filter, AlertTriangle, CheckCircle, RefreshCw, Download
+import {
+  ArrowRight,
+  ShieldCheck,
+  Check,
+  X,
+  Layers,
+  Target,
+  Scale,
+  Shield,
+  Mail,
+  Phone,
+  ArrowUpRight,
+  Lock,
+  Download,
+  Trash2,
+  ExternalLink,
+  Clock,
+  User,
+  Filter,
+  CheckCircle2,
+  MessageSquare,
+  Copy,
+  Share2,
+  ChevronDown,
+  Menu,
+  LogOut,
 } from 'lucide-react';
-import { 
-  collection, query, orderBy, onSnapshot, addDoc, 
-  updateDoc, deleteDoc, doc, limit, getDocs, setDoc,
-  Timestamp
+import type { User as FirebaseUser } from 'firebase/auth';
+import {
+  collection,
+  doc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp,
+  Timestamp,
 } from 'firebase/firestore';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import ReactMarkdown from 'react-markdown';
-import { format } from 'date-fns';
-import { db, auth, login, logout } from './firebase';
-import { Post, Credential, ContactMessage, SiteSettings } from './types';
-import ErrorBoundary from './components/ErrorBoundary';
-import ProgramDetailPage from './components/ProgramDetailPage';
-import heroStudyImg from './assets/images/luxury_private_study_1791706207887.jpg';
+import {
+  auth,
+  db,
+  ADMIN_EMAIL,
+  isAuthorizedAdmin,
+  signInAdminWithGoogle,
+  signOutAdmin,
+  onAuthStateChanged,
+  handleFirestoreError,
+  OperationType,
+} from './firebase';
+import heroWorkspaceImg from './assets/images/clarity_warm_workspace_1794141435574.jpg';
+import photoChoicesFocus from './assets/images/photo_choices_focus_1794305275415.jpg';
+import photoDirectionNext from './assets/images/photo_direction_next_1794305323610.jpg';
+import photoInnerReset from './assets/images/photo_inner_reset_1794305306834.jpg';
+import photoRelationComm from './assets/images/photo_relation_comm_1794305291524.jpg';
 
-// --- Seed Data ---
-const SEED_POSTS: Partial<Post>[] = [
-  {
-    id: 'seed-1',
-    title: "Leader and Problem",
-    category: "Inner Growth",
-    excerpt: "어떻게 문제에 접근하면 좋을까",
-    content: "Read on Naver Blog",
-    publishedAt: "2026-03-14T00:00:00Z",
-    slug: "leader-and-problem",
-    imageUrl: "https://images.unsplash.com/photo-1507537297725-24a1c029d3ca?q=80&w=1000&auto=format&fit=crop",
-    externalUrl: "https://blog.naver.com/yourthinkingpartner/224218005707"
-  },
-  {
-    id: 'seed-2',
-    title: "Complexity vs. Simplicity",
-    category: "Inner Growth",
-    excerpt: "어떻게 생각을 정리하면 좋을까",
-    content: "Read on Naver Blog",
-    publishedAt: "2026-03-18T00:00:00Z",
-    slug: "complexity-simplicity",
-    imageUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1000&auto=format&fit=crop",
-    externalUrl: "https://blog.naver.com/yourthinkingpartner/224231589774"
-  },
-  {
-    id: 'seed-3',
-    title: "Beyond the Breaking Point",
-    category: "Inner Growth",
-    excerpt: "왜 우리는 스스로를 무너뜨릴 만큼 짊어질까",
-    content: "Read on Naver Blog",
-    publishedAt: "2026-04-01T00:00:00Z",
-    slug: "leader-overload",
-    imageUrl: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?q=80&w=1000&auto=format&fit=crop",
-    externalUrl: "https://blog.naver.com/yourthinkingpartner/224216525846"
-  },
-  {
-    id: 'seed-4',
-    title: "Relationship and Desire",
-    category: "Inner Growth",
-    excerpt: "왜 어떤 관계는 갈등으로 끝이 날까",
-    content: "Read on Naver Blog",
-    publishedAt: "2026-04-08T00:00:00Z",
-    slug: "desire-recognition",
-    imageUrl: "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1000&auto=format&fit=crop",
-    externalUrl: "https://blog.naver.com/yourthinkingpartner/224216502208"
-  },
-  {
-    id: 'seed-5',
-    title: "Conflict Management",
-    category: "Inner Growth",
-    excerpt: "갈등 상황에서 '회피'는 정말 잘못된 선택일까",
-    content: "Read on Naver Blog",
-    publishedAt: "2026-04-22T00:00:00Z",
-    slug: "conflict-management",
-    imageUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop",
-    externalUrl: "https://blog.naver.com/yourthinkingpartner/224303947434"
-  },
-  {
-    id: 'seed-6',
-    title: "Leader and Communication",
-    category: "Inner Growth",
-    excerpt: "왜 우리의 말은 닿지 않을까",
-    content: "Read on Naver Blog",
-    publishedAt: "2026-05-06T00:00:00Z",
-    slug: "leader-language",
-    imageUrl: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?q=80&w=1000&auto=format&fit=crop",
-    externalUrl: "https://blog.naver.com/yourthinkingpartner/224218015851"
-  }
+export interface BookingRecord {
+  id: string;
+  createdAt: string;
+  name: string;
+  contact: string;
+  email?: string;
+  programId: string;
+  programTitle: string;
+  dilemma: string;
+  status: 'pending' | 'contacted' | 'confirmed' | 'cancelled';
+}
+
+const formatTimestamp = (value: unknown): string => {
+  const date =
+    value instanceof Timestamp
+      ? value.toDate()
+      : value instanceof Date
+      ? value
+      : new Date();
+  return `${date.getFullYear()}. ${String(date.getMonth() + 1).padStart(2, '0')}. ${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+};
+
+const PROGRAM_OPTIONS = [
+  { id: 'decision', label: '선택 & 집중' },
+  { id: 'career', label: '삶의 방향 & 전환' },
+  { id: 'mental', label: '내면 질서 & 번아웃' },
+  { id: 'communication', label: '관계 & 소통' },
+  { id: 'unsure', label: '아직 잘 모르겠음 (대화 중 함께 정리)' },
 ];
 
-const SEED_CREDS: Partial<Credential>[] = [
-  { 
-    title: "Bachelor of Architecture", 
-    organization: "Seoul National University", 
-    year: "Graduate", 
-    order: 0,
-    description: "건축학적 논리를 적용하여 복잡한 문제를 구조적으로 해석하고, 시스템적 관점에서 리더십과 조직 코칭의 명확한 방향과 우선순위를 도출합니다."
-  },
-  { 
-    title: "M.S. in Engineering & Project Management", 
-    organization: "UC Berkeley", 
-    year: "Graduate", 
-    order: 1,
-    description: "글로벌 경영 프레임워크를 활용하여 복잡한 조직 환경에서 실행력과 리더십을 이끌어내며, 구조적 사고와 전략적 코칭을 통합합니다."
-  },
-  { 
-    title: "B.A. in Psychology", 
-    organization: "Chung-Ang University", 
-    year: "Graduate", 
-    order: 2,
-    description: "인간 행동과 심리 기제에 대한 기초적인 이해를 바탕으로, 효과적인 코칭을 위한 과학적 근거를 제공합니다."
-  },
-  { 
-    title: "Certified Associate Coach (KAC)", 
-    organization: "Korea Coach Association", 
-    year: "Certified", 
-    order: 3,
-    description: "코칭 방법론에 대한 기초적인 전문성과 전문적인 윤리 기준에 대한 엄격한 준수를 입증합니다."
-  },
-  { 
-    title: "Certified Birkman® (The Birkman Method)", 
-    organization: "Birkman International", 
-    year: "Certified", 
-    order: 4,
-    description: "다면적 행동 특성, 내적 동기 및 스트레스 반응을 진단하여 자기 이해와 대인관계 효율성을 극대화합니다."
-  },
-  { 
-    title: "Certified TKI® (Thomas-Kilmann Conflict Mode Instrument)", 
-    organization: "Certified", 
-    year: "Certified", 
-    order: 5,
-    description: "갈등 상황에서 반복되는 사고와 감정의 패턴을 분석하여 효과적인 대응 전략을 수립합니다."
-  },
-  { 
-    title: "Certified FIRO-B® (Fundamental Interpersonal Relations Orientation – Behavior)", 
-    organization: "Certified", 
-    year: "Certified", 
-    order: 6,
-    description: "관계 속에서 형성된 사고 구조와 대인 관계 욕구를 파악하여 조직 내 협업과 소통을 개선합니다."
-  },
-  { 
-    title: "Certified Problem Solving Process Advanced Practitioner", 
-    organization: "Strategic Methodology", 
-    year: "Certified", 
-    order: 7,
-    description: "구조화된 프레임워크를 마스터하여 복잡한 조직의 과제를 분석하고 실행 가능한 전략적 솔루션을 도출합니다."
-  }
+const NAV_ITEMS = [
+  { href: '#home', label: 'Home' },
+  { href: '#programs', label: 'Programs' },
+  { href: '#credentials', label: 'Credentials' },
+  { href: '#stories', label: 'Stories' },
+  { href: '#approach', label: 'Approach' },
+  { href: '#insight', label: 'Insight' },
+  { href: '#contact', label: 'Contact' },
 ];
 
-// --- GA4 Event Tracking Helpers ---
-let lastContactSubmitTime = 0;
-export const trackContactSubmit = (buttonName = '최종 신청하기', location = 'contact_form') => {
-  const now = Date.now();
-  // Prevent duplicate events within 500ms (e.g., button click and form submit fired simultaneously)
-  if (now - lastContactSubmitTime < 500) return;
-  lastContactSubmitTime = now;
+interface InsightPost {
+  title: string;
+  url: string;
+}
 
-  try {
-    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-      window.gtag('event', 'contact_submit', {
-        button_name: buttonName,
-        location: location,
-      });
-    } else if (typeof window !== 'undefined' && Array.isArray(window.dataLayer)) {
-      window.dataLayer.push(['event', 'contact_submit', { button_name: buttonName, location: location }]);
-    }
-  } catch (error) {
-    console.warn('GA4 tracking error:', error);
-  }
-};
-
-export const trackCtaClick = (buttonName: string, location: string) => {
-  try {
-    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-      window.gtag('event', 'click_cta', {
-        button_name: buttonName,
-        location: location,
-      });
-    } else if (typeof window !== 'undefined' && Array.isArray(window.dataLayer)) {
-      window.dataLayer.push(['event', 'click_cta', { button_name: buttonName, location: location }]);
-    }
-  } catch (error) {
-    console.warn('GA4 tracking error:', error);
-  }
-};
-
-// --- Components ---
-
-const Navbar = ({ 
-  isAdmin, 
-  user, 
-  onLogin, 
-  onLogout,
-  onNavigateSection
-}: { 
-  isAdmin: boolean, 
-  user: FirebaseUser | null, 
-  onLogin: () => void, 
-  onLogout: () => void,
-  onNavigateSection?: (sectionId: string) => void
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const navLinks = [
-    { name: 'Home', href: '#home' },
-    { name: 'About', href: '#about' },
-    { name: 'Credentials', href: '#credentials' },
-    { name: 'Programs', href: '#program' },
-    { name: 'Insights', href: '#insights' },
-  ];
-
-  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (onNavigateSection) {
-      e.preventDefault();
-      onNavigateSection(href);
-    }
-  };
-
-  return (
-    <nav className="fixed w-full z-50 bg-brand-bg/90 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <div className="flex justify-between items-center h-24">
-          <div className="flex items-center gap-2">
-            <a 
-              href="#home" 
-              onClick={(e) => handleLinkClick(e, '#home')}
-              className="text-xl font-display font-bold tracking-[0.15em] uppercase flex items-center gap-2.5"
-            >
-              <span className="text-brand-ink">PARTNER</span>
-              <span className="text-brand-primary">IN</span>
-              <span className="text-brand-ink">THINKING</span>
-            </a>
-          </div>
-
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-7">
-            {navLinks.map((link) => (
-              <a 
-                key={link.name} 
-                href={link.href} 
-                onClick={(e) => handleLinkClick(e, link.href)}
-                className="text-xs font-bold uppercase tracking-[0.2em] hover:text-brand-primary transition-colors"
-              >
-                {link.name}
-              </a>
-            ))}
-            <a
-              href="#contact"
-              onClick={(e) => {
-                trackCtaClick('무료 세션 바로가기', 'navbar');
-                handleLinkClick(e, '#contact');
-              }}
-              className="ml-1 bg-brand-primary hover:opacity-90 text-white text-xs font-medium px-4 py-2 rounded-full transition-all duration-300 shadow-sm shadow-brand-primary/20 flex items-center gap-1.5"
-            >
-              <span>30분 무료 세션</span>
-              <ArrowRight size={12} />
-            </a>
-            {isAdmin && (
-              <div className="flex items-center gap-4 pl-4 border-l border-brand-ink/10">
-                <a href="#admin" className="text-xs font-bold text-brand-primary">ADMIN</a>
-                <button onClick={onLogout} className="text-xs uppercase tracking-widest opacity-60 hover:opacity-100">Logout</button>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile Toggle */}
-          <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? <X /> : <Menu />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-brand-bg border-b border-brand-ink/5 overflow-hidden"
-          >
-            <div className="flex flex-col p-6 gap-4">
-              {navLinks.map((link) => (
-                <a 
-                  key={link.name} 
-                  href={link.href} 
-                  onClick={(e) => {
-                    setIsOpen(false);
-                    handleLinkClick(e, link.href);
-                  }}
-                  className="text-lg font-serif italic"
-                >
-                  {link.name}
-                </a>
-              ))}
-              <a
-                href="#contact"
-                onClick={(e) => {
-                  trackCtaClick('무료 세션 바로가기', 'navbar');
-                  setIsOpen(false);
-                  handleLinkClick(e, '#contact');
-                }}
-                className="mt-2 bg-brand-primary text-white text-center py-3 rounded-xl font-medium flex items-center justify-center gap-2 shadow-sm"
-              >
-                <span>30분 무료 세션</span>
-                <ArrowRight size={16} />
-              </a>
-              {isAdmin && (
-                <div className="pt-4 border-t border-brand-ink/5">
-                  <button onClick={onLogout} className="text-sm uppercase tracking-widest">Logout</button>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </nav>
-  );
-};
-
-const Hero = ({ onNavigateContact }: { onNavigateContact?: () => void }) => (
-  <section id="home" className="relative min-h-screen flex items-center pt-28 pb-20 overflow-hidden bg-brand-bg">
-    <div className="max-w-7xl mx-auto px-6 lg:px-12 grid lg:grid-cols-2 gap-16 items-start relative z-10">
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1, ease: "easeOut" }}
-        className="pt-10"
-      >
-        <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight text-brand-ink mb-2">
-          A THINKING PARTNER
-        </h1>
-        <h2 className="text-2xl md:text-3xl font-sans font-light text-brand-ink/90 mb-12 tracking-tight">
-          Complexity to clear next steps
-        </h2>
-        
-        <div className="mb-10 pl-5 border-l border-brand-primary/30">
-          <p className="text-lg md:text-xl font-serif text-[#ab8040] italic tracking-normal leading-relaxed break-keep">
-            “성과로 증명해야 하는 자리에서<br />
-            온전히 나눌 수 없어 홀로 내린 결정들.<br />
-            과연 리더로서 얼마나 확신하고 계시나요?”
-          </p>
-        </div>
-        
-        <div className="space-y-1 text-lg md:text-xl font-sans text-brand-ink/80 leading-snug">
-          <p>복잡한 세상 속,</p>
-          <p>얽힌 머릿속과 마음을</p>
-          <p>체계적으로 구조화합니다.</p>
-          <p>행동으로 이어지는 대화를 통해</p>
-          <p>당신의 일상을 정돈하고,</p>
-          <p>다시 충만한 삶으로 나아가도록 돕는</p>
-          <p>사고 파트너입니다.</p>
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1.2, ease: "easeOut" }}
-        className="flex flex-col items-end lg:pt-[180px]"
-      >
-        <div className="w-full max-w-sm">
-          {/* Rounded photo frame */}
-          <div className="overflow-hidden rounded-[32px] shadow-2xl shadow-brand-ink/10 border border-brand-ink/5 bg-brand-bg-alt">
-            <img 
-              src={heroStudyImg} 
-              alt="따뜻한 조명이 켜진 프라이빗 서재 데스크" 
-              className="w-full aspect-[4/3] object-cover"
-              referrerPolicy="no-referrer"
-              onError={(e) => {
-                e.currentTarget.src = '/images/hero_study.jpg';
-              }}
-            />
-          </div>
-          
-          {/* Quote text beneath the image, right aligned, scaled down to match '사고 파트너입니다.' baseline */}
-          <div className="mt-5 text-right pr-1">
-            <p className="font-serif italic text-brand-ink/80 text-base sm:text-lg leading-snug">
-              When the moment truly matters<br />
-              You don’t have to lead by yourself.
-            </p>
-          </div>
-        </div>
-      </motion.div>
-    </div>
-  </section>
-);
-
-const About = () => (
-  <section id="about" className="py-24 bg-white/50">
-    <div className="max-w-7xl mx-auto px-6 lg:px-12">
-      <div className="grid lg:grid-cols-12 gap-12 lg:gap-20">
-        {/* Left Column: Title & Philosophy */}
-        <motion.div 
-          className="lg:col-span-5"
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8 }}
-        >
-          <span className="text-xs uppercase tracking-[0.3em] text-brand-primary mb-8 block font-bold">
-            ABOUT PARTNER <span className="text-brand-primary">IN</span> THINKING
-          </span>
-          <h2 className="text-3xl md:text-5xl font-serif italic text-brand-ink mb-8 leading-tight">
-            From Complexity <br /> to clear next steps
-          </h2>
-          <p className="text-lg md:text-xl font-serif italic text-brand-ink/60 leading-relaxed mb-8">
-            당신의 사고 파트너로서 <br /> 명확한 시야를 찾도록 돕습니다.
-          </p>
-          <div className="w-20 h-px bg-brand-primary mb-6"></div>
-        </motion.div>
-
-        {/* Right Column: Description & Features */}
-        <div className="lg:col-span-7 lg:pt-[12.5rem]">
-          <motion.p 
-            className="text-base md:text-lg font-sans leading-relaxed text-brand-ink/80 mb-12 break-keep"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            중요한 책임의 무게는 누구에게나 버겁게 느껴질 수 있습니다. <br />
-            리더의 자리에서든, 일과 삶의 전환점에서든 우리는 종종 복잡함에 갇힙니다. <br /><br />
-            당신의 <span className="italic text-brand-primary">Thinking Partner</span>로서 
-            <span className="font-bold text-brand-ink"> 사고의 구조화</span>를 통해 실행 가능한 명확함을 찾고, <br />
-            <span className="font-bold text-brand-ink"> 내면의 질서</span>를 정돈하여 지속 가능한 균형을 회복하도록 돕습니다.
-          </motion.p>
-          
-          <div className="grid md:grid-cols-2 gap-x-12 gap-y-16">
-            {[
-              { icon: <Layout size={20} />, title: "Critical Framing", desc: <>복잡한 상황의 본질을 정의하고, <br />해결해야 할 핵심 문제를 선명하게 만듭니다.</> },
-              { icon: <Target size={20} />, title: "Actionable Focus", desc: <>한정된 에너지를 가장 중요한 과제에 정렬하여 <br />실질적인 실행력을 높입니다.</> },
-              { icon: <Scale size={20} />, title: "Inner Order", desc: <>내면의 충돌과 사고 패턴을 객관화하여 <br />실행을 가로막는 심리적 장벽을 해소합니다.</> },
-              { icon: <Shield size={20} />, title: "Relational Balance", desc: <>관계 속의 사고 구조를 파악하여 <br />조직과 개인의 지속 가능한 조화를 이룹니다.</> }
-            ].map((item, i) => (
-              <motion.div 
-                key={i}
-                className="space-y-4"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.6, delay: 0.1 * i + 0.4 }}
-              >
-                <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary">
-                  {item.icon}
-                </div>
-                <h3 className="text-lg font-bold text-brand-ink">{item.title}</h3>
-                <p className="text-sm md:text-base text-brand-ink/60 leading-relaxed break-keep">
-                  {item.desc}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-);
-
-const Program = ({ 
-  onSelectProgramDetail,
-  onNavigateContact 
-}: { 
-  onSelectProgramDetail: (slug: string) => void;
-  onNavigateContact?: (programTitle?: string) => void;
-}) => {
-  const pillars = [
-    {
-      id: "performance-decision",
-      koreanTitle: "성과 & 의사 결정",
-      englishTitle: "Performance & Decision Alignment",
-      relevance: "할 일은 쏟아지고 불확실성은 높은데, 지금 어떤 결정부터 내려야 할지 막막할 때",
-      outcome: "내가 쌓아온 삶과 리더십의 고유한 가치를 기준으로 우선순위를 정하고 가장 중요한 과제에 몰입하게 됩니다. 흔들림 없는 내면의 기준을 바탕으로, 나다운 의사결정의 확신을 가질 수 있습니다.",
-      image: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=1000&auto=format&fit=crop",
-      slug: "focus-alignment"
-    },
-    {
-      id: "team-communication",
-      koreanTitle: "조직 & 커뮤니케이션",
-      englishTitle: "Team Dynamics & Communication",
-      relevance: "팀원 간 갈등과 모호한 역할, 또는 민감하고 난처한 대화로 인해 조직 성과가 정체될 때",
-      outcome: "관계 속 반복되는 충돌 패턴을 분석하고 명확한 대화 구조를 정립합니다. 어려운 피드백 상황에서도 관계를 해치지 않으며, 심리적 안전감과 건강한 협업 시너지를 완성합니다.",
-      image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1000&auto=format&fit=crop",
-      slug: "relational-dynamics"
-    },
-    {
-      id: "inner-order",
-      koreanTitle: "멘탈 & 자기 관리",
-      englishTitle: "Inner Order & Mental Resilience",
-      relevance: "리더로서의 고독감과 과도한 책임감으로 번아웃이 오고 감정 조절이 힘들 때",
-      outcome: "감정적 앙금과 누적된 스트레스를 객관적으로 정리해 내면의 평정심을 회복합니다. 어떤 위기 상황에서도 흔들리지 않는 단단한 회복탄력성과 지속 가능한 리더십 에너지를 충전합니다.",
-      image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1000&auto=format&fit=crop",
-      slug: "core-value"
-    },
-    {
-      id: "career-next-chapter",
-      koreanTitle: "커리어 & 넥스트 챕터",
-      englishTitle: "Career & Next Chapter",
-      relevance: "리더로서의 다음 커리어 방향이 고민되거나, 조직을 벗어난 이후의 삶과 새로운 무대를 준비할 때",
-      outcome: "현직에서의 영향력 확장을 넘어, 직함 이후의 온전한 나로서 지적 자산과 고유 가치를 재정의합니다. 조직 안팎의 불확실성을 걷어내고 주도적이고 품격 있는 커리어 및 제2의 삶 로드맵을 선명하게 설계합니다.",
-      image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1000&auto=format&fit=crop",
-      slug: "transition-next-chapter"
-    }
-  ];
-
-  return (
-    <section id="program" className="py-24 md:py-32 bg-white">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        {/* Header */}
-        <div className="mb-16 md:mb-24">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <span className="text-xs uppercase tracking-[0.3em] text-brand-primary mb-6 block font-bold">4 Core Coaching Pillars</span>
-            <h2 className="text-4xl md:text-6xl font-serif italic text-brand-ink mb-12">Programs</h2>
-            
-            <div className="max-w-3xl space-y-4 text-brand-ink/80 text-lg leading-relaxed break-keep">
-              <p>
-                리더가 처한 현실과 당면 과제는 저마다 다르지만,<br className="hidden md:block" />
-                현장에서 마주하는 보편적인 고민은 아래의 영역들로 모입니다.
-              </p>
-              <p>
-                복잡하게 얽힌 내 고민의 본질을 객관적으로 들여다보고 싶다면,<br className="hidden md:block" />
-                30분 무료 세션을 통해 생각의 정돈과 방향성을 함께 탐색해 보세요.
-              </p>
-              
-              <div className="mt-8 pt-6 border-t border-brand-ink/10">
-                <p className="text-sm md:text-base text-[#b58b4c] font-medium leading-relaxed flex items-start gap-2 break-keep">
-                  <span className="inline-block mt-1.5 w-1.5 h-1.5 rounded-full bg-[#b58b4c] shrink-0" />
-                  <span>
-                    모든 프로그램은 설계 기준이며, 실제 코칭 세션은 리더가 직면한 비즈니스 맥락과 조직 환경에 맞추어<br />
-                    1:1 맞춤형(Tailored)으로 최적화되어 진행됩니다.
-                  </span>
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* 5 Pillars List */}
-        <div className="space-y-20 md:space-y-24">
-          {pillars.map((prog, progIdx) => (
-            <motion.div
-              key={prog.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: progIdx * 0.08 }}
-              className="grid md:grid-cols-12 gap-8 md:gap-12 items-start"
-            >
-              {/* Left: Image */}
-              <div className="md:col-span-3 lg:col-span-2">
-                <div className="aspect-square overflow-hidden rounded-2xl shadow-sm border border-brand-ink/5">
-                  <img 
-                    src={prog.image} 
-                    alt={`${prog.koreanTitle} ${prog.englishTitle}`} 
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-              </div>
-
-              {/* Right: Content Area */}
-              <div className="md:col-span-9 lg:col-span-10">
-                {/* Title: 한글 먼저, 영어를 작은 크기로 뒤에, 숫자는 제거 */}
-                <div className="flex flex-wrap items-baseline gap-2.5 md:gap-3 mb-2">
-                  <h4 className="text-xl md:text-2xl font-bold text-brand-ink tracking-tight">
-                    {prog.koreanTitle}
-                  </h4>
-                  <span className="text-sm md:text-base font-normal text-brand-ink/50 tracking-normal">
-                    {prog.englishTitle}
-                  </span>
-                </div>
-                
-                {/* Divider Line */}
-                <div className="w-full h-px bg-brand-ink/10 mb-5"></div>
-                
-                {/* Summary & Description Grid */}
-                <div className="grid md:grid-cols-2 gap-6 md:gap-10">
-                  {/* Summary / 타깃의 구체적 고민 상황 (메인 카피) */}
-                  <div className="space-y-2">
-                    <p className="text-brand-ink/90 font-medium text-base md:text-lg leading-relaxed break-keep">
-                      "{prog.relevance}"
-                    </p>
-                  </div>
-                  
-                  {/* Description / 우측 상세 설명: 코칭 후 기대효과 */}
-                  <div className="flex flex-col h-full justify-center">
-                    <p className="text-brand-ink/70 text-sm md:text-base leading-relaxed break-keep">
-                      {prog.outcome}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Unified Call To Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="mt-20 md:mt-28 bg-brand-bg/60 border border-brand-ink/10 rounded-[32px] md:rounded-[40px] p-8 sm:p-12 md:p-16 text-center max-w-4xl mx-auto shadow-sm"
-        >
-          <span className="text-xs uppercase tracking-[0.3em] text-[#ab8040] font-bold block mb-3">
-            1:1 Thinking Partner Session
-          </span>
-          <h3 className="text-2xl md:text-3xl font-sans font-bold text-brand-ink mb-4 break-keep tracking-tight">
-            함께 생각해 보고 싶은 주제나 고민이 있으신가요?
-          </h3>
-          <p className="text-brand-ink/75 text-base md:text-lg leading-relaxed max-w-2xl mx-auto mb-6 break-keep">
-            어떤 주제라도 좋습니다. 당면한 고민이나 생각을 남겨주시면,<br className="hidden sm:block" /> 
-            30분 무료 세션을 통해 함께 방향성을 찾아드립니다.
-          </p>
-
-          {/* 3-Step Process Mini Guide */}
-          <div className="my-8 py-5 px-4 sm:px-6 bg-white/80 rounded-2xl border border-brand-ink/10 max-w-2xl mx-auto shadow-sm">
-            <div className="grid sm:grid-cols-3 gap-3 sm:gap-4 text-left sm:text-center divide-y sm:divide-y-0 sm:divide-x divide-brand-ink/10">
-              <div className="pt-2 sm:pt-0 sm:px-3">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#ab8040] block mb-1">STEP 1</span>
-                <p className="text-sm font-bold text-brand-ink mb-0.5">간단한 신청</p>
-                <p className="text-xs text-brand-ink/60">고민 키워드 작성</p>
-              </div>
-              <div className="pt-3 sm:pt-0 sm:px-3">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#ab8040] block mb-1">STEP 2</span>
-                <p className="text-sm font-bold text-brand-ink mb-0.5">일정 확정</p>
-                <p className="text-xs text-brand-ink/60">비대면 Zoom 또는 유선 조율</p>
-              </div>
-              <div className="pt-3 sm:pt-0 sm:px-3">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#ab8040] block mb-1">STEP 3</span>
-                <p className="text-sm font-bold text-brand-ink mb-0.5">1:1 맞춤 세션</p>
-                <p className="text-xs text-brand-ink/60">30분간 생각 정리 및 방향성 도출</p>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              trackCtaClick('사고 파트너와 1:1 30분 무료 세션 신청하기', 'programs_section');
-              if (onNavigateContact) {
-                onNavigateContact();
-              } else {
-                const el = document.getElementById('contact');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            className="inline-flex items-center gap-3 bg-brand-primary hover:opacity-90 text-white px-8 md:px-10 py-4 rounded-2xl text-base sm:text-lg md:text-xl font-medium shadow-lg shadow-brand-primary/20 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-          >
-            <span>사고 파트너와 1:1 30분 무료 세션 신청하기</span>
-            <ArrowRight size={20} />
-          </button>
-          <p className="text-xs text-brand-ink/45 mt-4">
-            세션 전 사전 준비나 별도의 비용은 필요하지 않습니다. 편안한 마음으로 신청해 주세요.
-          </p>
-        </motion.div>
-
-        {/* Footer Info */}
-        <div className="mt-32 pt-16 border-t border-brand-ink/10 space-y-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="bg-brand-bg/30 p-8 md:p-10 rounded-3xl space-y-6"
-          >
-            <h4 className="font-bold text-brand-ink/80">아래와 같은 경우에는 이 방식이 기대에 맞지 않을 수 있습니다.</h4>
-            <ul className="space-y-3 text-brand-ink/60 text-sm md:text-base list-disc ml-5">
-              <li>빠른 해답이나 직접적인 조언을 중심으로 한 접근</li>
-              <li>사고 과정보다 판단의 위임을 원하는 경우</li>
-              <li>감정적 위로 자체를 주된 목적으로 하는 심리 상담 중심의 접근</li>
-            </ul>
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const PostCard = ({ post }: { post: Post }) => {
-  const isAvailable = post.content !== "Coming soon..." || post.externalUrl;
-  
-  return (
-    <motion.div 
-      whileHover={isAvailable ? { y: -10 } : {}}
-      className={`group ${isAvailable ? 'cursor-pointer' : 'cursor-default'}`}
-    >
-      <div className="aspect-[16/10] overflow-hidden rounded-3xl mb-6">
-        <img 
-          src={post.imageUrl || `https://picsum.photos/seed/${post.slug}/800/500`} 
-          alt={post.title} 
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          referrerPolicy="no-referrer"
-        />
-      </div>
-      <h3 className="text-xl font-sans font-semibold mb-3 group-hover:text-brand-primary transition-colors">{post.title}</h3>
-      <p className="text-brand-ink/60 line-clamp-2 mb-4">{post.excerpt}</p>
-      <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider">
-        {!isAvailable && (
-          <span className="opacity-40">Coming Soon</span>
-        )}
-      </div>
-    </motion.div>
-  );
-};
-
-const Insights = ({ posts }: { posts: Post[] }) => {
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-
-  return (
-    <section id="insights" className="py-24">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <motion.div 
-          className="flex justify-between items-end mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
-          <div>
-            <span className="text-xs uppercase tracking-[0.3em] text-brand-primary mb-4 block">Inner Growth & Leadership</span>
-            <h2 className="text-3xl md:text-5xl font-serif italic">Insights</h2>
-          </div>
-          <a 
-            href="https://blog.naver.com/yourthinkingpartner" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="hidden md:flex items-center gap-2 text-sm font-bold uppercase tracking-widest border-b-2 border-brand-primary pb-1"
-          >
-            Read more on Naver Blog <ExternalLink size={16} />
-          </a>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-          {posts.length > 0 ? (
-            posts.map((post, i) => (
-              <motion.div 
-                key={post.id} 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.1 }}
-                onClick={() => {
-                  if (post.externalUrl) {
-                    window.open(post.externalUrl, '_blank', 'noopener,noreferrer');
-                  } else if (post.content !== "Coming soon...") {
-                    setSelectedPost(post);
-                  }
-                }}
-              >
-                <PostCard post={post} />
-              </motion.div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12 opacity-50 italic">
-              Sharing insights soon...
-            </div>
-          )}
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {selectedPost && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-brand-ink/90 backdrop-blur-sm">
-            <motion.div 
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50 }}
-              className="bg-brand-bg text-brand-ink w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[40px] p-8 md:p-16 relative"
-            >
-              <button 
-                onClick={() => setSelectedPost(null)}
-                className="absolute top-8 right-8 p-2 hover:bg-brand-ink/5 rounded-full transition-colors"
-              >
-                <X />
-              </button>
-              
-              <div className="max-w-2xl mx-auto">
-                <h2 className="text-3xl md:text-4xl font-sans font-bold mb-12 leading-tight">{selectedPost.title}</h2>
-                <div className="aspect-video rounded-3xl overflow-hidden mb-12">
-                  <img 
-                    src={selectedPost.imageUrl || `https://picsum.photos/seed/${selectedPost.slug}/1200/800`} 
-                    alt={selectedPost.title} 
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-                <div className="markdown-body">
-                  <ReactMarkdown>{selectedPost.content}</ReactMarkdown>
-                </div>
-                <div className="mt-16 pt-8 border-t border-brand-ink/10 flex justify-between items-center">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-brand-primary text-white flex items-center justify-center font-serif italic">P</div>
-                    <div>
-                      <p className="text-sm font-bold">A Thinking Partner</p>
-                      <p className="text-xs opacity-50">Author</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setSelectedPost(null)}
-                    className="text-sm font-bold uppercase tracking-widest opacity-60 hover:opacity-100"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </section>
-  );
-};
-
-const Credentials = ({ credentials }: { credentials: Credential[] }) => {
-  const academicBackground = [
-    {
-      title: "Bachelor of Architecture",
-      organization: "Seoul National University"
-    },
-    {
-      title: "M.S. in Engineering & Project Management",
-      organization: "UC Berkeley"
-    },
-    {
-      title: "B.A. in Psychology",
-      organization: "Chung-Ang University"
-    }
-  ];
-
-  const coreCertification = [
-    {
-      title: "Certified Associate Coach (KAC)",
-      organization: "",
-      description: ""
-    },
-    {
-      title: "Certified Birkman® (The Birkman Method)",
-      organization: "",
-      description: ""
-    },
-    {
-      title: "Certified TKI® (Thomas-Kilmann Conflict Mode Instrument)",
-      organization: "",
-      description: ""
-    },
-    {
-      title: "Certified FIRO-B® (Fundamental Interpersonal Relations Orientation – Behavior)",
-      organization: "",
-      description: ""
-    },
-    {
-      title: "Certified Problem Solving Process Advanced Practitioner",
-      organization: "",
-      description: ""
-    },
-    {
-      title: "Certified Leader Championship Orientation Trainer",
-      organization: "",
-      description: ""
-    },
-    {
-      title: "Certified Training & Facilitation Techniques for Instructors Trainer",
-      organization: "",
-      description: ""
-    },
-    {
-      title: "Certified Green Belt, and more",
-      organization: "",
-      description: ""
-    }
-  ];
-
-  return (
-    <section id="credentials" className="py-24 bg-brand-ink text-brand-bg">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <div className="grid lg:grid-cols-12 gap-20">
-          {/* Left Column: Title & Philosophy */}
-          <motion.div 
-            className="lg:col-span-5"
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1 }}
-          >
-            <h2 className="text-3xl md:text-5xl font-serif italic mb-12">Professional <br />Foundation</h2>
-            <div className="relative">
-              <div className="absolute -left-6 top-0 w-1 h-full bg-brand-primary/30"></div>
-              <blockquote className="text-sm md:text-base font-sans leading-relaxed text-brand-bg/90 break-keep">
-                "저는 정답을 제시하기 위해 이 자리에 있는 것이 아닙니다.<br />
-                당신이 가장 중요한 결정을 내려야 하는 순간,<br />
-                결코 혼자 고민하지 않도록 함께 합니다.<br /><br />
-                당신의 'Thinking Partner'로서, 당신만의 방식으로<br />
-                더 나은 선택을 할 수 있는 명확한 시야를 찾도록 돕습니다."
-              </blockquote>
-            </div>
-          </motion.div>
-
-          {/* Right Column: Background & Certification */}
-          <motion.div 
-            className="lg:col-span-7 space-y-20"
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1 }}
-          >
-            {/* Professional Experience */}
-            <div>
-              <h3 className="text-xs uppercase tracking-[0.3em] text-brand-primary mb-10 font-bold">Professional Experience</h3>
-              <div className="text-brand-bg/80 text-sm md:text-base font-sans leading-relaxed border-l-2 border-brand-primary pl-8">
-                <p className="font-bold mb-4">인사이트, 브랜드, 전략, 리더십에 기반한 23년의 단단한 전문 경력</p>
-                <p className="mb-4">
-                  생명과학, 소비재, 의료, 식음료 등 각 산업 분야의 외국계 기업들을 거치며 비즈니스의 본질을<br />
-                  마주하고 실효성 있는 해법을 도출해 왔습니다. 그 과정에서 글로벌 기업의 Internal Advisor<br />
-                  임원으로서 조직의 핵심 의사결정을 지원하며 전략적 실행력을 확립했습니다.
-                </p>
-                <p>
-                  지금은 Independent Thinking Partner로서 복잡함 속에 갇힌 개인과 조직에게<br />
-                  선명한 질서를 함께 만들어가고 있습니다. 모호한 상황을 확신 있는 의사결정과<br />
-                  정교한 실행 체계로 전환하는 것, 그것이 Thinking Partner가 추구하는 핵심 가치입니다.
-                </p>
-              </div>
-            </div>
-
-            {/* Core Certification */}
-            <div>
-              <h3 className="text-xs uppercase tracking-[0.3em] text-brand-primary mb-10 font-bold">Professional Certification</h3>
-              <div className="space-y-6">
-                {coreCertification.map((cert, idx) => (
-                  <div key={idx} className="group">
-                    <div className={`flex justify-between items-start ${cert.description ? 'mb-2' : ''}`}>
-                      <h4 className="text-sm font-sans font-semibold text-brand-bg/90">{cert.title}</h4>
-                      {cert.organization && (
-                        <span className="text-xs uppercase tracking-widest opacity-40 shrink-0 ml-4">{cert.organization}</span>
-                      )}
-                    </div>
-                    {cert.description && (
-                      <p className="text-brand-bg/50 text-sm leading-relaxed border-l border-brand-primary/20 pl-6 mt-4">
-                        {cert.description}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Academic Background */}
-            <div>
-              <h3 className="text-xs uppercase tracking-[0.3em] text-brand-primary mb-10 font-bold">Academic Background</h3>
-              <div className="space-y-6">
-                {academicBackground.map((edu, idx) => (
-                  <div key={idx} className="group">
-                    <div className="flex justify-between items-start">
-                      <h4 className="text-sm font-sans font-semibold text-brand-bg/90">{edu.title}</h4>
-                      <span className="text-xs uppercase tracking-widest text-white font-bold shrink-0 ml-4">{edu.organization}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Professional Training */}
-            <div>
-              <h3 className="text-xs uppercase tracking-[0.3em] text-brand-primary mb-10 font-bold">Professional Training</h3>
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-sans font-semibold text-brand-bg/90">Situational Leadership® II (SLII®): The Ken Blanchard Companies</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-sans font-semibold text-brand-bg/90">The Speed of Trust®: FranklinCovey</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-sans font-semibold text-brand-bg/90">Prosci® Change Management: Prosci Inc.</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-sans font-semibold text-brand-bg/90">Leadership Essentials, Coaching Leadership, and more</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const AVAILABLE_PROGRAMS = [
-  "성과 & 의사 결정 (Performance & Decision Alignment)",
-  "조직 & 커뮤니케이션 (Team Dynamics & Communication)",
-  "멘탈 & 자기 관리 (Inner Order & Mental Resilience)",
-  "커리어 & 넥스트 챕터 (Career & Next Chapter)",
-  "1:1 Coaching",
-  "기타"
+const INSIGHTS: InsightPost[] = [
+  {
+    title: '복잡해지기만 하는 생각을 어떻게 정리하면 좋을까?',
+    url: 'https://blog.naver.com/yourthinkingpartner/224231589774',
+  },
+  {
+    title: '어려운 결정을 시작하는 법',
+    url: 'https://blog.naver.com/yourthinkingpartner/224246641421',
+  },
+  {
+    title: '준비가 먼저일까, 행동이 먼저일까',
+    url: 'https://blog.naver.com/yourthinkingpartner/224224977184',
+  },
+  {
+    title: '왜 문제는 계속 복잡해지는가, 그리고 어떻게 단순하게 볼 것인가',
+    url: 'https://blog.naver.com/yourthinkingpartner/224218005707',
+  },
 ];
 
-const Contact = ({ initialProgram = '' }: { initialProgram?: string }) => {
-  const [formData, setFormData] = useState({ name: '', phone: '', email: '', message: '' });
-  const [selectedPrograms, setSelectedPrograms] = useState<string[]>(() => {
-    if (!initialProgram) return [];
-    const matched = AVAILABLE_PROGRAMS.find(p => 
-      p === initialProgram || p.startsWith(initialProgram) || p.includes(initialProgram)
-    );
-    return matched ? [matched] : [];
-  });
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
-  const [programError, setProgramError] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+interface ProgramItem {
+  id: string;
+  title: string;
+  subtitleEn: string;
+  quote: string;
+  description: string;
+  image: string;
+}
 
-  useEffect(() => {
-    if (initialProgram) {
-      const matched = AVAILABLE_PROGRAMS.find(p => 
-        p === initialProgram || p.startsWith(initialProgram) || p.includes(initialProgram)
-      );
-      const toAdd = matched || initialProgram;
-      setSelectedPrograms([toAdd]);
-      setProgramError(false);
-    } else {
-      setSelectedPrograms([]);
-    }
-  }, [initialProgram]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const toggleProgram = (program: string) => {
-    setSelectedPrograms(prev => {
-      const next = prev.includes(program) 
-        ? prev.filter(p => p !== program) 
-        : [...prev, program];
-      return next;
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // GA4 이벤트 전송: 최종 신청 완료 (contact_submit)
-    trackContactSubmit('최종 신청하기', 'contact_form');
-
-    const applicantName = formData.name.trim() || '신청자';
-    const finalPrograms = selectedPrograms;
-    const programsText = finalPrograms.join(', ');
-
-    setStatus('sending');
-
-    // 2. 폼 입력값 보관 후 초기화
-    const submissionData = {
-      name: formData.name,
-      phone: formData.phone,
-      email: formData.email,
-      program: programsText || '30분 무료 세션 (프로그램 미지정)',
-      programs: finalPrograms,
-      subject: programsText 
-        ? `Thinking Journey Inquiry: ${programsText}`
-        : 'Thinking Journey Inquiry: 30분 무료 세션 신청',
-      message: formData.message,
-      createdAt: new Timestamp(Math.floor(Date.now() / 1000), 0)
-    };
-
-    setFormData({ name: '', phone: '', email: '', message: '' });
-
-    // 3. 백그라운드에서 안전하게 데이터베이스(Firestore)에 저장
-    try {
-      await addDoc(collection(db, 'messages'), submissionData);
-      setStatus('idle');
-    } catch (err) {
-      console.warn('DB submission backup notice:', err);
-      setStatus('error');
-    }
-  };
-
-  return (
-    <section id="contact" className="py-20 md:py-32 bg-brand-bg/50">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <motion.div 
-          className="bg-white rounded-[40px] md:rounded-[60px] p-6 sm:p-8 md:p-12 lg:p-20 shadow-2xl shadow-black/5 grid lg:grid-cols-2 gap-x-16 lg:gap-x-24 gap-y-12 lg:gap-y-0"
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1 }}
-        >
-          <div className="lg:col-span-1">
-            <p className="text-xs md:text-sm uppercase tracking-[0.3em] font-sans text-brand-ink/50 mb-4">Complexity to clear next steps.</p>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif italic font-bold mb-8 sm:mb-12 tracking-tight leading-tight">
-              Start Your <br />
-              <span className="inline-block ml-4 sm:ml-8 md:ml-12">Thinking Journey</span>
-            </h2>
-          </div>
-
-          <div className="hidden lg:block"></div>
-
-          <div className="lg:col-span-1">
-            <div className="text-base sm:text-lg md:text-xl font-sans text-brand-ink/70 leading-relaxed mb-8 sm:mb-12 space-y-1">
-              <p>막연한 고민이 선명한 액션 플랜이 되는 시간.</p>
-              <p>당신의 사고 파트너와 함께</p>
-              <p>새로운 변화를 설계해 보세요.</p>
-            </div>
-
-            <div className="space-y-6">
-              <a href="mailto:Contact@partnerinthinking.com" className="flex items-center gap-3 sm:gap-5 group w-full overflow-hidden">
-                <div className="shrink-0 w-12 h-12 rounded-full bg-brand-bg flex items-center justify-center group-hover:bg-brand-primary/10 transition-all duration-300">
-                  <Mail size={20} className="text-brand-primary" />
-                </div>
-                <span className="text-sm sm:text-base md:text-lg font-sans text-brand-ink/80 group-hover:text-brand-primary transition-colors break-all">
-                  Contact@partnerinthinking.com
-                </span>
-              </a>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* 1st Row: 이름 & 연락처 (한 줄에 2열) */}
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <label className="text-sm font-bold text-brand-ink/80 ml-1">이름</label>
-                <input 
-                  required
-                  type="text" 
-                  placeholder="성함을 입력해 주세요"
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full bg-brand-bg border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-brand-primary outline-none transition-all placeholder:text-brand-ink/30" 
-                />
-              </div>
-              <div className="space-y-3">
-                <label className="text-sm font-bold text-brand-ink/80 ml-1">연락처</label>
-                <input 
-                  required
-                  type="tel" 
-                  placeholder="010-0000-0000"
-                  value={formData.phone}
-                  onChange={e => setFormData({...formData, phone: e.target.value})}
-                  className="w-full bg-brand-bg border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-brand-primary outline-none transition-all placeholder:text-brand-ink/30" 
-                />
-              </div>
-            </div>
-
-            {/* 2nd Row: 이메일 (다음 줄에 단독 배치) */}
-            <div className="space-y-3">
-              <label className="text-sm font-bold text-brand-ink/80 ml-1">이메일</label>
-              <input 
-                required
-                type="email" 
-                placeholder="답변 및 일정 안내를 받으실 이메일 주소"
-                value={formData.email}
-                onChange={e => setFormData({...formData, email: e.target.value})}
-                className="w-full bg-brand-bg border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-brand-primary outline-none transition-all placeholder:text-brand-ink/30" 
-              />
-            </div>
-            
-            <div className="space-y-3" ref={dropdownRef}>
-              <div className="flex items-center justify-between ml-1">
-                <label className="text-sm font-bold text-brand-ink/80">관심 프로그램</label>
-              </div>
-
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsDropdownOpen(prev => !prev)}
-                  className={`w-full bg-brand-bg text-left rounded-2xl px-6 py-4 outline-none transition-all flex items-center justify-between cursor-pointer min-h-[58px] ${
-                    programError 
-                      ? 'ring-2 ring-red-400 bg-red-50/30' 
-                      : isDropdownOpen 
-                        ? 'ring-2 ring-brand-primary' 
-                        : 'focus:ring-2 focus:ring-brand-primary'
-                  }`}
-                  aria-expanded={isDropdownOpen}
-                >
-                  <div className="flex-1 pr-3 overflow-hidden">
-                    {selectedPrograms.length === 0 ? (
-                      <span className="text-brand-ink/40 text-sm sm:text-base select-none">
-                        관심 있는 프로그램을 선택해 주세요 (중복 선택 가능)
-                      </span>
-                    ) : (
-                      <div className="flex flex-wrap gap-1.5 py-0.5">
-                        {selectedPrograms.map(p => (
-                          <span
-                            key={p}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-primary text-white shadow-sm"
-                          >
-                            <span>{p}</span>
-                            <span
-                              role="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleProgram(p);
-                              }}
-                              className="hover:opacity-75 focus:outline-none cursor-pointer"
-                              aria-label={`${p} 선택 해제`}
-                            >
-                              <X size={12} />
-                            </span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className={`shrink-0 text-brand-ink/40 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-brand-primary' : ''}`}>
-                    <ChevronDown size={20} />
-                  </div>
-                </button>
-
-                <AnimatePresence>
-                  {isDropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute z-30 left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-brand-ink/10 p-2 space-y-1 max-h-72 overflow-y-auto"
-                    >
-                      <div className="px-3 py-2 text-xs font-medium text-brand-ink/60 border-b border-brand-ink/5">
-                        관심 있는 프로그램을 선택해 주세요 (중복 선택 가능)
-                      </div>
-                      <div className="pt-1 space-y-0.5">
-                        {AVAILABLE_PROGRAMS.map(program => {
-                          const isSelected = selectedPrograms.includes(program);
-                          return (
-                            <button
-                              key={program}
-                              type="button"
-                              onClick={() => toggleProgram(program)}
-                              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium flex items-center justify-between transition-colors ${
-                                isSelected 
-                                  ? 'bg-brand-primary/10 text-brand-primary font-semibold' 
-                                  : 'text-brand-ink/80 hover:bg-brand-bg/80'
-                              }`}
-                            >
-                              <span>{program}</span>
-                              <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition-colors ${
-                                isSelected 
-                                  ? 'bg-brand-primary border-brand-primary text-white' 
-                                  : 'border-brand-ink/20 bg-white'
-                              }`}>
-                                {isSelected && <Check size={14} strokeWidth={3} />}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-              {programError && (
-                <p className="text-xs text-red-500 ml-1">관심 있는 프로그램을 하나 이상 선택해 주세요.</p>
-              )}
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-sm font-bold text-brand-ink/80 ml-1">메시지</label>
-              <textarea 
-                required
-                rows={4}
-                placeholder="함께 생각해 보고 싶은 주제나 고민을 적어주시면 30분 무료 세션을 진행해 드립니다."
-                value={formData.message}
-                onChange={e => setFormData({...formData, message: e.target.value})}
-                className="w-full bg-brand-bg border-none rounded-2xl px-6 py-5 focus:ring-2 focus:ring-brand-primary outline-none transition-all resize-none placeholder:text-brand-ink/30" 
-              ></textarea>
-            </div>
-
-            <button 
-              type="submit"
-              disabled={status === 'sending'}
-              onClick={() => {
-                trackContactSubmit('최종 신청하기', 'contact_form');
-              }}
-              className="w-full bg-brand-primary text-white py-4 rounded-2xl text-lg sm:text-xl font-medium hover:opacity-90 transition-all duration-300 shadow-lg shadow-brand-primary/20 disabled:opacity-50 cursor-pointer"
-            >
-              {status === 'sending' ? '전송 중...' : '사고 파트너와 1:1 30분 무료 세션 신청하기'}
-            </button>
-            
-            <p className="text-center text-xs text-brand-ink/50 mt-3 flex items-center justify-center gap-1.5">
-              <Shield size={13} className="text-[#ab8040] shrink-0" />
-              <span>작성해 주신 모든 대화 주제와 개인정보는 비밀보장 원칙에 따라 철저히 보호됩니다.</span>
-            </p>
-            
-            {status === 'error' && (
-              <p className="text-center text-red-500 font-medium">오류가 발생했습니다. 다시 시도해 주세요.</p>
-            )}
-          </form>
-        </motion.div>
-      </div>
-
-          </section>
-  );
-};
-
-// --- Admin Dashboard (Contact Submissions) ---
-const AdminDashboard = ({ messages, onLogout }: { messages: ContactMessage[], onLogout: () => void }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'free_session' | 'other'>('all');
-  const [deleteTarget, setDeleteTarget] = useState<ContactMessage | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Auto-hide toast after 3 seconds
-  useEffect(() => {
-    if (toastMessage) {
-      const timer = setTimeout(() => setToastMessage(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toastMessage]);
-
-  // Format timestamp helper
-  const formatTimestamp = (createdAt: any) => {
-    if (!createdAt) return '접수일시 미상';
-    try {
-      if (typeof createdAt?.toDate === 'function') {
-        return format(createdAt.toDate(), 'yyyy. MM. dd HH:mm');
-      }
-      if (createdAt?.seconds) {
-        return format(new Date(createdAt.seconds * 1000), 'yyyy. MM. dd HH:mm');
-      }
-      const d = new Date(createdAt);
-      if (!isNaN(d.getTime())) {
-        return format(d, 'yyyy. MM. dd HH:mm');
-      }
-      return String(createdAt);
-    } catch {
-      return '접수일시 미상';
-    }
-  };
-
-  // Copy to clipboard helper
-  const handleCopy = (text: string, label: string) => {
-    if (!text) return;
-    navigator.clipboard.writeText(text).then(() => {
-      setToastMessage(`${label}이(가) 클립보드에 복사되었습니다.`);
-    }).catch(() => {
-      setToastMessage(`복사 실패: 직접 복사해 주세요.`);
-    });
-  };
-
-  // Delete message handler without window.confirm (works inside iframes)
-  const handleConfirmDelete = async () => {
-    if (!deleteTarget?.id) return;
-    setIsDeleting(true);
-    setErrorMessage(null);
-    try {
-      await deleteDoc(doc(db, 'messages', deleteTarget.id));
-      setToastMessage(`'${deleteTarget.name}' 님의 신청 내역이 삭제되었습니다.`);
-      setDeleteTarget(null);
-    } catch (err: any) {
-      console.error('Error deleting message:', err);
-      setErrorMessage(`삭제 실패: ${err?.message || '권한이 없거나 네트워크 오류가 발생했습니다.'}`);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  // Statistics
-  const freeSessionCount = messages.filter(m => (m.subject || '').includes('무료 세션')).length;
-  const otherCount = messages.length - freeSessionCount;
-
-  // Filter & Search
-  const filteredMessages = messages.filter(msg => {
-    const isFree = (msg.subject || '').includes('무료 세션');
-    if (filterType === 'free_session' && !isFree) return false;
-    if (filterType === 'other' && isFree) return false;
-
-    if (!searchTerm.trim()) return true;
-    const term = searchTerm.toLowerCase();
-    const nameMatch = (msg.name || '').toLowerCase().includes(term);
-    const emailMatch = (msg.email || '').toLowerCase().includes(term);
-    const phoneMatch = (msg.phone || '').toLowerCase().includes(term);
-    const subjectMatch = (msg.subject || '').toLowerCase().includes(term);
-    const contentMatch = (msg.message || '').toLowerCase().includes(term);
-    return nameMatch || emailMatch || phoneMatch || subjectMatch || contentMatch;
-  });
-
-  return (
-    <div id="admin" className="min-h-screen bg-[#F8F6F2] text-stone-900 py-16 px-4 sm:px-6 lg:px-8 border-t-4 border-brand-primary">
-      {/* Toast Notification */}
-      <AnimatePresence>
-        {toastMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-6 right-6 z-50 bg-stone-900 text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 text-sm font-medium border border-stone-700"
-          >
-            <CheckCircle size={18} className="text-emerald-400 shrink-0" />
-            <span>{toastMessage}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Delete Confirmation Modal (In-App dialog, no window.confirm) */}
-      <AnimatePresence>
-        {deleteTarget && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-7 border border-stone-200"
-            >
-              <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center shrink-0 border border-red-100">
-                  <AlertTriangle size={24} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-stone-900">신청 내역 삭제 확인</h3>
-                  <p className="text-sm text-stone-500 mt-1">삭제된 내역은 영구적으로 제거되며 복구할 수 없습니다.</p>
-                </div>
-              </div>
-
-              <div className="bg-stone-50 rounded-xl p-4 border border-stone-200/80 mb-5 text-sm space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-stone-500 font-medium">신청자:</span>
-                  <span className="font-bold text-stone-900 text-base">{deleteTarget.name} 님</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-stone-500 font-medium">신청 프로그램:</span>
-                  <span className="font-semibold text-brand-primary">{deleteTarget.subject || '30분 무료 세션 신청'}</span>
-                </div>
-                {deleteTarget.phone && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-stone-500 font-medium">연락처:</span>
-                    <span className="font-mono text-stone-900 font-semibold">{deleteTarget.phone}</span>
-                  </div>
-                )}
-                {deleteTarget.email && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-stone-500 font-medium">이메일:</span>
-                    <span className="text-stone-900">{deleteTarget.email}</span>
-                  </div>
-                )}
-              </div>
-
-              {errorMessage && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-medium">
-                  {errorMessage}
-                </div>
-              )}
-
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  disabled={isDeleting}
-                  onClick={() => {
-                    setDeleteTarget(null);
-                    setErrorMessage(null);
-                  }}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-colors cursor-pointer"
-                >
-                  취소
-                </button>
-                <button
-                  type="button"
-                  disabled={isDeleting}
-                  onClick={handleConfirmDelete}
-                  className="px-5 py-2.5 rounded-xl text-sm font-bold bg-red-600 hover:bg-red-700 text-white shadow-sm flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
-                >
-                  {isDeleting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>삭제 중...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 size={16} />
-                      <span>삭제 확정</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <div className="max-w-6xl mx-auto">
-        {/* Header Bar */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-stone-100">
-            <div>
-              <div className="flex flex-wrap items-center gap-3 mb-2">
-                <span className="bg-brand-primary/10 text-brand-primary text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                  ADMIN ONLY
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full font-medium border border-emerald-100">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  실시간 연동 중
-                </span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-900 tracking-tight">
-                신청 및 고객 문의 관리
-              </h1>
-              <p className="text-sm text-stone-600 mt-1.5 font-sans leading-relaxed">
-                웹사이트를 통해 고객이 신청한 30분 무료 세션 및 프로그램 문의 내역을 실시간으로 확인하고 관리합니다.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 self-start md:self-auto">
-              <a
-                href="/partner-in-thinking-code.zip"
-                download="partner-in-thinking-code.zip"
-                className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-brand-primary hover:text-white bg-brand-primary/10 hover:bg-brand-primary px-4 py-2.5 rounded-xl transition-all cursor-pointer border border-brand-primary/20 shadow-xs"
-                title="GitHub에 올릴 수 있는 전체 소스코드 압축파일 다운로드"
-              >
-                <Download size={16} />
-                <span>코드 다운로드 (.zip)</span>
-              </a>
-              <button
-                type="button"
-                onClick={onLogout}
-                className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200/80 px-4 py-2.5 rounded-xl transition-all cursor-pointer border border-stone-200"
-              >
-                <LogOut size={16} />
-                <span>관리자 로그아웃</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Stats Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6">
-            <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/60">
-              <p className="text-xs font-bold text-stone-500 uppercase tracking-wider">전체 접수 내역</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl font-serif font-bold text-stone-900">{messages.length}</span>
-                <span className="text-xs font-medium text-stone-500">건</span>
-              </div>
-            </div>
-
-            <div className="bg-rose-50/70 rounded-2xl p-4 border border-rose-100">
-              <p className="text-xs font-bold text-rose-800 uppercase tracking-wider">30분 무료 세션 신청</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl font-serif font-bold text-brand-primary">{freeSessionCount}</span>
-                <span className="text-xs font-medium text-rose-700">건</span>
-              </div>
-            </div>
-
-            <div className="bg-blue-50/70 rounded-2xl p-4 border border-blue-100">
-              <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">기타 프로그램 / 문의</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl font-serif font-bold text-blue-900">{otherCount}</span>
-                <span className="text-xs font-medium text-blue-700">건</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filter and Search Bar */}
-        <div className="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          {/* Filter Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-stone-100 rounded-xl">
-            <button
-              type="button"
-              onClick={() => setFilterType('all')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                filterType === 'all'
-                  ? 'bg-white text-stone-900 shadow-sm'
-                  : 'text-stone-500 hover:text-stone-800'
-              }`}
-            >
-              전체 ({messages.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterType('free_session')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                filterType === 'free_session'
-                  ? 'bg-brand-primary text-white shadow-sm'
-                  : 'text-stone-500 hover:text-stone-800'
-              }`}
-            >
-              30분 무료 세션 ({freeSessionCount})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterType('other')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                filterType === 'other'
-                  ? 'bg-stone-800 text-white shadow-sm'
-                  : 'text-stone-500 hover:text-stone-800'
-              }`}
-            >
-              기타 문의 ({otherCount})
-            </button>
-          </div>
-
-          {/* Search Input */}
-          <div className="relative flex-1 sm:max-w-xs">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
-            <input
-              type="text"
-              placeholder="이름, 연락처, 이메일, 내용 검색..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:bg-white transition-all"
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-0.5 cursor-pointer"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Submissions List */}
-        {filteredMessages.length === 0 ? (
-          <div className="bg-white rounded-3xl p-16 text-center border border-stone-200 shadow-sm">
-            <div className="w-16 h-16 rounded-full bg-stone-100 text-stone-400 flex items-center justify-center mx-auto mb-4">
-              <MessageSquare size={28} />
-            </div>
-            <h3 className="text-lg font-bold text-stone-800 mb-1">
-              {messages.length === 0 ? '현재 접수된 신청 내역이 없습니다.' : '일치하는 검색 결과가 없습니다.'}
-            </h3>
-            <p className="text-xs sm:text-sm text-stone-500 max-w-sm mx-auto">
-              {messages.length === 0
-                ? '고객이 웹사이트에서 30분 무료 세션을 신청하면 여기에 실시간으로 표시됩니다.'
-                : '검색어를 변경하거나 필터를 초기화해 보세요.'}
-            </p>
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm('')}
-                className="mt-4 text-xs font-semibold text-brand-primary hover:underline cursor-pointer"
-              >
-                검색어 초기화
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-5">
-            {filteredMessages.map((msg) => {
-              const formattedDate = formatTimestamp(msg.createdAt);
-              const isFreeSession = (msg.subject || '').includes('무료 세션');
-
-              return (
-                <div
-                  key={msg.id}
-                  className="bg-white rounded-2xl p-6 sm:p-7 border border-stone-200/90 shadow-sm hover:shadow-md transition-all relative overflow-hidden"
-                >
-                  {/* Left accent strip for free session */}
-                  {isFreeSession && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-primary" />
-                  )}
-
-                  {/* Top Bar: Badge, Date, Delete Button */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <span
-                        className={`text-xs font-bold px-3 py-1 rounded-full ${
-                          isFreeSession
-                            ? 'bg-rose-100 text-rose-900 border border-rose-200'
-                            : 'bg-stone-100 text-stone-800 border border-stone-200'
-                        }`}
-                      >
-                        {msg.subject || '30분 무료 세션 신청'}
-                      </span>
-                      <span className="text-xs text-stone-600 font-semibold flex items-center gap-1.5 bg-stone-50 px-2.5 py-1 rounded-md border border-stone-200/80 font-mono">
-                        <Clock size={13} className="text-stone-500" />
-                        {formattedDate}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 self-end sm:self-auto">
-                      <button
-                        type="button"
-                        onClick={() => setDeleteTarget(msg)}
-                        className="flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
-                        title="신청 내역 삭제"
-                      >
-                        <Trash2 size={14} />
-                        <span>삭제</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Applicant Details */}
-                  <div className="pt-4 space-y-4">
-                    {/* Name */}
-                    <div>
-                      <h3 className="text-xl sm:text-2xl font-serif font-bold text-stone-900 flex items-center gap-2">
-                        <span>{msg.name}</span>
-                        <span className="text-xs font-sans font-normal text-stone-500 bg-stone-100 px-2 py-0.5 rounded">
-                          신청자
-                        </span>
-                      </h3>
-                    </div>
-
-                    {/* Contact Information Box (High Contrast) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-stone-50 rounded-xl p-4 border border-stone-200/80">
-                      {/* Phone */}
-                      <div className="flex items-center justify-between gap-3 bg-white p-3 rounded-lg border border-stone-200">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
-                            <Phone size={16} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">연락처</p>
-                            <p className="text-sm sm:text-base font-mono font-bold text-stone-900 truncate">
-                              {msg.phone || '미기재'}
-                            </p>
-                          </div>
-                        </div>
-
-                        {msg.phone && (
-                          <div className="flex items-center gap-1 shrink-0">
-                            <a
-                              href={`tel:${msg.phone}`}
-                              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-md transition-colors border border-emerald-100"
-                            >
-                              통화
-                            </a>
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(msg.phone || '', '전화번호')}
-                              className="p-1.5 text-stone-500 hover:text-stone-800 rounded-md hover:bg-stone-100 transition-colors cursor-pointer"
-                              title="전화번호 복사"
-                            >
-                              <Copy size={14} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Email */}
-                      <div className="flex items-center justify-between gap-3 bg-white p-3 rounded-lg border border-stone-200">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0 border border-indigo-100">
-                            <Mail size={16} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">이메일</p>
-                            <p className="text-xs sm:text-sm font-semibold text-stone-900 truncate">
-                              {msg.email || '미기재'}
-                            </p>
-                          </div>
-                        </div>
-
-                        {msg.email && (
-                          <div className="flex items-center gap-1 shrink-0">
-                            <a
-                              href={`mailto:${msg.email}`}
-                              className="text-xs font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-md transition-colors border border-indigo-100"
-                            >
-                              메일 작성
-                            </a>
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(msg.email || '', '이메일')}
-                              className="p-1.5 text-stone-500 hover:text-stone-800 rounded-md hover:bg-stone-100 transition-colors cursor-pointer"
-                              title="이메일 복사"
-                            >
-                              <Copy size={14} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Message Body */}
-                    {msg.message && (
-                      <div className="space-y-1.5">
-                        <span className="text-xs font-bold text-stone-600 uppercase tracking-wider flex items-center gap-1.5">
-                          <MessageSquare size={13} className="text-stone-500" />
-                          <span>신청 사유 및 문의 메시지</span>
-                        </span>
-                        <div className="bg-stone-50/80 p-4 sm:p-5 rounded-xl border border-stone-200 text-sm sm:text-base leading-relaxed text-stone-800 whitespace-pre-wrap font-sans">
-                          {msg.message}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// --- Main App ---
+const PROGRAMS: ProgramItem[] = [
+  {
+    id: 'decision',
+    title: '선택 & 집중',
+    subtitleEn: 'Choices & Focus Alignment',
+    quote: '해야 할 일은 산더미인데, 막상 무엇부터 손대야 할지 머릿속이 엉킬 때',
+    description:
+      '쏟아지는 과제와 복잡한 생각 속에서 진짜 중요한 단 하나의 우선순위를 짚어냅니다. 흔들리지 않는 나만의 기준으로 가장 시급한 과제에 몰입하여, 더 이상 미루지 않는 명확한 실행력을 회복합니다.',
+    image: photoChoicesFocus,
+  },
+  {
+    id: 'career',
+    title: '삶의 방향 & 전환',
+    subtitleEn: 'Life Direction & Next Chapter',
+    quote: '앞으로 나아가야 할 방향이 흐릿해지고, 삶의 새로운 전환점을 고민하게 될 때',
+    description:
+      '익숙한 자리를 넘어, 온전한 \'나\'로서의 고유한 가치와 기준을 재정의합니다. 불확실한 미래에 대한 막막함을 지우고, 주도적이고 선명한 삶의 다음 궤적을 함께 설계합니다.',
+    image: photoDirectionNext,
+  },
+  {
+    id: 'mental',
+    title: '내면 질서 & 번아웃',
+    subtitleEn: 'Inner Order & Mental Reset',
+    quote: '지나친 생각과 과부하로 마음의 여유가 사라지고 번아웃이 찾아왔을 때',
+    description:
+      '과도한 고민과 누적된 피로로 사고가 멈출 때, 머릿속 안개를 걷어내고 내면의 질서를 회복합니다. 흩어진 마음을 정돈하여 흔들리지 않는 단단한 회복탄력성과 일상의 에너지를 되찾습니다.',
+    image: photoInnerReset,
+  },
+  {
+    id: 'communication',
+    title: '관계 & 소통',
+    subtitleEn: 'Relational Dynamics & Communication',
+    quote: '특정 사람과의 관계나 풀리지 않는 대화 때문에 마음이 지치고 에너지가 소모될 때',
+    description:
+      '얽혀 있는 관계와 반복되는 소통의 벽을 객관화합니다. 감정적인 소모를 줄이고 명확한 대화 기준을 정립하여, 나와 타인 모두를 지키는 건강한 관계의 시너지를 만듭니다.',
+    image: photoRelationComm,
+  },
+];
 
 export default function App() {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [credentials, setCredentials] = useState<Credential[]>([]);
-  const [messages, setMessages] = useState<ContactMessage[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeProgramDetail, setActiveProgramDetail] = useState<string | null>(null);
-  const [selectedContactProgram, setSelectedContactProgram] = useState<string>('');
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
+  const [isProgramDropdownOpen, setIsProgramDropdownOpen] = useState<boolean>(false);
+  const [formName, setFormName] = useState<string>('');
+  const [formContact, setFormContact] = useState<string>('');
+  const [formEmail, setFormEmail] = useState<string>('');
+  const [formDilemma, setFormDilemma] = useState<string>('');
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const [isSubmittingBooking, setIsSubmittingBooking] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [lastBooking, setLastBooking] = useState<BookingRecord | null>(null);
 
-  const handleSelectProgramDetail = (slug: string) => {
-    setActiveProgramDetail(slug);
-    if (!window.history.state || window.history.state.programSlug !== slug) {
-      window.history.pushState({ isDetail: true, programSlug: slug }, '', `#program-detail-${slug}`);
-    }
-  };
+  // Firebase Auth & Admin states
+  const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
+  const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const isAdmin = isAuthReady && isAuthorizedAdmin(authUser);
 
-  const handleCloseProgramDetail = () => {
-    setActiveProgramDetail(null);
-    if (window.history.state?.isDetail) {
-      window.history.back();
-    }
-  };
+  // Bookings list synced from Firestore (only for authenticated admin)
+  const [bookings, setBookings] = useState<BookingRecord[]>([]);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handleNavigateSection = (sectionId: string, preselectedProgram?: string) => {
-    if (activeProgramDetail) {
-      setActiveProgramDetail(null);
-      if (window.history.state?.isDetail) {
-        window.history.back();
-      }
-    }
-    setSelectedContactProgram(preselectedProgram || '');
-    
-    setTimeout(() => {
-      // Find element and scroll
-      // If it's a hash link like '#home', direct scroll. Otherwise strip '#'
-      const targetId = sectionId.startsWith('#') ? sectionId : `#${sectionId}`;
-      const element = document.querySelector(targetId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }, 150);
-  };
+  // Admin filter states
+  const [adminTab, setAdminTab] = useState<'bookings' | 'sns'>('bookings');
+  const [copiedCode, setCopiedCode] = useState<boolean>(false);
+  const [adminStatusFilter, setAdminStatusFilter] = useState<string>('all');
+  const [adminSearchQuery, setAdminSearchQuery] = useState<string>('');
 
-  // Sync deep link on initialization or tab refresh/navigation & popstate
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const programDropdownRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Track Firebase Auth state
   useEffect(() => {
-    const checkHashOnLoad = () => {
-      const hash = window.location.hash;
-      if (hash.startsWith('#program-detail-')) {
-        const slug = hash.replace('#program-detail-', '');
-        setActiveProgramDetail(slug);
-        if (!window.history.state || window.history.state.programSlug !== slug) {
-          window.history.replaceState({ isDetail: true, programSlug: slug }, '', hash);
-        }
-      }
-    };
-
-    checkHashOnLoad();
-
-    const handlePopState = (event: PopStateEvent) => {
-      if (event.state && event.state.isDetail) {
-        setActiveProgramDetail(event.state.programSlug || null);
-      } else {
-        setActiveProgramDetail(null);
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setAuthUser(user);
+      setIsAuthReady(true);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const isAdmin = user?.email === 'wonyoung.park@gmail.com';
-
-  useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-    });
-
-    const qPosts = query(collection(db, 'posts'), orderBy('publishedAt', 'asc'), limit(6));
-    const unsubscribePosts = onSnapshot(qPosts, (snapshot) => {
-      setPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post)));
-    });
-
-    const qCreds = query(collection(db, 'credentials'), orderBy('order', 'asc'));
-    const unsubscribeCreds = onSnapshot(qCreds, (snapshot) => {
-      setCredentials(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Credential)));
-    });
-
-    return () => {
-      unsubscribeAuth();
-      unsubscribePosts();
-      unsubscribeCreds();
-    };
-  }, []);
-
+  // Subscribe to Firestore bookings ONLY when authenticated as the authorized admin
   useEffect(() => {
     if (!isAdmin) {
-      setMessages([]);
+      setBookings([]);
       return;
     }
 
-    const qMessages = query(collection(db, 'messages'), orderBy('createdAt', 'desc'));
-    const unsubscribeMessages = onSnapshot(qMessages, (snapshot) => {
-      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContactMessage)));
-    }, (error) => {
-      console.error("Firestore messages listener error:", error);
-    });
+    const bookingsPath = 'bookings';
+    const bookingsQuery = query(
+      collection(db, bookingsPath),
+      orderBy('createdAt', 'desc')
+    );
 
-    return () => unsubscribeMessages();
+    const unsubscribe = onSnapshot(
+      bookingsQuery,
+      (snapshot) => {
+        const items: BookingRecord[] = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            createdAt: formatTimestamp(data.createdAt),
+            name: String(data.name || ''),
+            contact: String(data.contact || ''),
+            email: data.email ? String(data.email) : undefined,
+            programId: String(data.programId || 'unsure'),
+            programTitle: String(data.programTitle || ''),
+            dilemma: String(data.dilemma || ''),
+            status: (data.status as BookingRecord['status']) || 'pending',
+          };
+        });
+        setBookings(items);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, bookingsPath);
+      }
+    );
+
+    return () => unsubscribe();
   }, [isAdmin]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-bg">
-        <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  // Support #admin and direct section hash sublinks (e.g. /#programs) on cold load
+  useEffect(() => {
+    let timerId: number | undefined;
+    const scrollToHash = (hash: string, smooth: boolean) => {
+      if (!hash || hash.length <= 1 || hash === '#admin') return;
+      const targetId = decodeURIComponent(hash.slice(1));
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+      }
+    };
+
+    const handleInitialHash = () => {
+      const hash = window.location.hash;
+      if (hash === '#admin') {
+        setIsAdminOpen(true);
+        return;
+      }
+      if (hash && hash.length > 1) {
+        requestAnimationFrame(() => scrollToHash(hash, false));
+        timerId = window.setTimeout(() => scrollToHash(hash, true), 180);
+      }
+    };
+
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash === '#admin') {
+        setIsAdminOpen(true);
+        return;
+      }
+      scrollToHash(hash, true);
+    };
+
+    handleInitialHash();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => {
+      if (timerId !== undefined) window.clearTimeout(timerId);
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
+
+  // Close dropdown, mobile menu, or active modal on Escape key
+  useEffect(() => {
+    if (!isModalOpen && !isAdminOpen && !isProgramDropdownOpen && !isMobileMenuOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (isProgramDropdownOpen) {
+        setIsProgramDropdownOpen(false);
+      } else if (isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+      } else if (isAdminOpen) {
+        setIsAdminOpen(false);
+      } else if (isModalOpen) {
+        setIsModalOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen, isAdminOpen, isProgramDropdownOpen, isMobileMenuOpen]);
+
+  // Lock background page scroll while a modal is open
+  useEffect(() => {
+    if (!isModalOpen && !isAdminOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isModalOpen, isAdminOpen]);
+
+  // Close program dropdown when clicking outside
+  useEffect(() => {
+    if (!isProgramDropdownOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        programDropdownRef.current &&
+        !programDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsProgramDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isProgramDropdownOpen]);
+
+  // Close mobile menu when clicking outside header
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        headerRef.current &&
+        !headerRef.current.contains(e.target as Node)
+      ) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMobileMenuOpen]);
+
+  const handleOpenBooking = (programId?: string) => {
+    if (programId) {
+      setSelectedPrograms([programId]);
+    } else {
+      setSelectedPrograms([]);
+    }
+    setIsMobileMenuOpen(false);
+    setIsProgramDropdownOpen(false);
+    setFormName('');
+    setFormContact('');
+    setFormEmail('');
+    setFormDilemma('');
+    setSubmitError(null);
+    setIsSubmitted(false);
+    setLastBooking(null);
+    setIsModalOpen(true);
+  };
+
+  const toggleProgramSelection = (id: string) => {
+    setSelectedPrograms((prev) => {
+      if (id === 'unsure') {
+        return prev.includes('unsure') ? [] : ['unsure'];
+      }
+      const withoutUnsure = prev.filter((item) => item !== 'unsure');
+      if (withoutUnsure.includes(id)) {
+        return withoutUnsure.filter((item) => item !== id);
+      }
+      return [...withoutUnsure, id];
+    });
+  };
+
+  const handleSubmitBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmittingBooking) return;
+
+    const cleanName = formName.trim().slice(0, 80);
+    const cleanContact = formContact.trim().slice(0, 40);
+    const cleanEmail = formEmail.trim().slice(0, 120);
+    const cleanDilemma = formDilemma.trim().slice(0, 3000);
+    if (!cleanName || !cleanContact || !cleanEmail || !cleanDilemma) return;
+
+    const selectedLabels = selectedPrograms
+      .map((id) => PROGRAM_OPTIONS.find((opt) => opt.id === id)?.label)
+      .filter(Boolean);
+    const progTitle = (
+      selectedLabels.length > 0
+        ? selectedLabels.join(', ')
+        : '미정 (대화 시 맞춤 안내)'
+    ).slice(0, 200);
+    const progId = (selectedPrograms.join(',') || 'unsure').slice(0, 120);
+
+    setIsSubmittingBooking(true);
+    setSubmitError(null);
+
+    const newDocRef = doc(collection(db, 'bookings'));
+    const docPath = `bookings/${newDocRef.id}`;
+
+    try {
+      await setDoc(newDocRef, {
+        name: cleanName,
+        contact: cleanContact,
+        email: cleanEmail,
+        programId: progId,
+        programTitle: progTitle,
+        dilemma: cleanDilemma,
+        status: 'pending',
+        createdAt: serverTimestamp(),
+      });
+
+      const newBooking: BookingRecord = {
+        id: newDocRef.id,
+        createdAt: formatTimestamp(new Date()),
+        name: cleanName,
+        contact: cleanContact,
+        email: cleanEmail,
+        programId: progId,
+        programTitle: progTitle,
+        dilemma: cleanDilemma,
+        status: 'pending',
+      };
+
+      setLastBooking(newBooking);
+      setIsProgramDropdownOpen(false);
+      setIsSubmitted(true);
+    } catch (error) {
+      setSubmitError('신청 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+      handleFirestoreError(error, OperationType.CREATE, docPath);
+    } finally {
+      setIsSubmittingBooking(false);
+    }
+  };
+
+  const handleUpdateStatus = async (id: string, status: BookingRecord['status']) => {
+    if (!isAdmin) return;
+    const docPath = `bookings/${id}`;
+    try {
+      await updateDoc(doc(db, 'bookings', id), {
+        status,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, docPath);
+    }
+  };
+
+  const handleDeleteBooking = async (id: string) => {
+    if (!isAdmin) return;
+    const docPath = `bookings/${id}`;
+    try {
+      await deleteDoc(doc(db, 'bookings', id));
+      setConfirmDeleteId(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, docPath);
+    }
+  };
+
+  const handleAdminSignIn = async () => {
+    if (isSigningIn) return;
+    setIsSigningIn(true);
+    setAuthError(null);
+    try {
+      await signInAdminWithGoogle();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes('popup-closed-by-user')) {
+        setAuthError('Google 로그인 중 문제가 발생했습니다. 팝업 차단 여부를 확인한 뒤 다시 시도해 주세요.');
+      }
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleSwitchAdminAccount = async () => {
+    setAuthError(null);
+    await signOutAdmin();
+    await handleAdminSignIn();
+  };
+
+  const handleAdminSignOut = async () => {
+    setAuthError(null);
+    await signOutAdmin();
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['접수일시', '이름', '연락처', '이메일', '관심 프로그램', '상태', '메시지'];
+    const rows = bookings.map((b) => [
+      `"${b.createdAt}"`,
+      `"${b.name.replace(/"/g, '""')}"`,
+      `"${b.contact.replace(/"/g, '""')}"`,
+      `"${(b.email || '').replace(/"/g, '""')}"`,
+      `"${b.programTitle.replace(/"/g, '""')}"`,
+      `"${b.status === 'pending' ? '대기중' : b.status === 'contacted' ? '연락완료' : b.status === 'confirmed' ? '세션확정' : '취소'}"`,
+      `"${b.dilemma.replace(/"/g, '""').replace(/\n/g, ' ')}"`,
+    ]);
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `partner_in_thinking_bookings_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filteredBookings = bookings.filter((b) => {
+    const matchesStatus =
+      adminStatusFilter === 'all' || b.status === adminStatusFilter;
+    const matchesSearch =
+      adminSearchQuery === '' ||
+      b.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+      b.contact.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+      (b.email || '').toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+      b.dilemma.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+      b.programTitle.toLowerCase().includes(adminSearchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
+
+  const handleCopySnsSnippet = () => {
+    const snippet = `<!-- OpenGraph (KakaoTalk, Facebook, Instagram, Slack, LinkedIn) -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="PARTNER IN THINKING" />
+<meta property="og:title" content="Complexity to Clarity" />
+<meta property="og:description" content="복잡한 세상 속, 얽힌 머릿속과 마음을 체계적으로 구조화하는 생각 파트너" />
+<meta property="og:url" content="https://www.partnerinthinking.com" />
+<meta property="og:image" content="https://www.partnerinthinking.com/og-image.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="982" />
+<meta property="og:image:height" content="507" />
+<meta property="og:locale" content="ko_KR" />
+
+<!-- Twitter / X Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Complexity to Clarity" />
+<meta name="twitter:description" content="복잡한 세상 속, 얽힌 머릿속과 마음을 체계적으로 구조화하는 생각 파트너" />
+<meta name="twitter:image" content="https://www.partnerinthinking.com/og-image.png" />`;
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(snippet);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    }
+  };
 
   return (
-    <ErrorBoundary>
-      <div className="relative">
-        {!activeProgramDetail && (
-          <Navbar 
-            isAdmin={isAdmin} 
-            user={user} 
-            onLogin={login} 
-            onLogout={logout} 
-            onNavigateSection={handleNavigateSection} 
-          />
-        )}
-        
-        {activeProgramDetail ? (
-          <ProgramDetailPage 
-            initialProgramId={activeProgramDetail} 
-            onClose={handleCloseProgramDetail} 
-            onNavigateSection={handleNavigateSection} 
-          />
-        ) : (
-          <main>
-            <Hero onNavigateContact={() => handleNavigateSection('#contact')} />
-            <About />
-            <Credentials credentials={credentials} />
-            <Program 
-              onSelectProgramDetail={handleSelectProgramDetail} 
-              onNavigateContact={(title) => handleNavigateSection('#contact', title)}
-            />
-            <Insights posts={posts.length > 0 ? posts : (SEED_POSTS as Post[]).slice(0, 6)} />
-            <Contact key={selectedContactProgram} initialProgram={selectedContactProgram} />
-          </main>
-        )}
+    <div className="min-h-screen bg-[#FAF6F0] text-[#221A14] selection:bg-[#5C4533] selection:text-[#FAF6F0] antialiased">
+      {/* 1. TOP BAR NAVIGATION */}
+      <header ref={headerRef} className="sticky top-0 z-40 bg-[#FAF6F0]/95 backdrop-blur-md border-b border-[#E8DFD3]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-2 sm:gap-4 lg:gap-8">
+          {/* Logo naturally blending in without artificial box/border */}
+          <a
+            href="#home"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="text-[12.5px] sm:text-base font-bold tracking-[0.1em] sm:tracking-[0.16em] uppercase text-[#221A14] hover:opacity-80 transition-opacity whitespace-nowrap shrink-0"
+          >
+            PARTNER <span className="font-normal text-[#8A725D]">IN</span> THINKING
+          </a>
 
-        {isAdmin && <AdminDashboard messages={messages} onLogout={logout} />}
+          <nav className="hidden md:flex items-center gap-5 lg:gap-7 text-[14px] lg:text-[15px] font-medium text-[#5C4A3B]">
+            {NAV_ITEMS.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="hover:text-[#221913] transition-colors whitespace-nowrap"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
 
-        <footer className="py-12 bg-brand-bg border-t border-brand-ink/5">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="text-sm font-display font-semibold tracking-widest uppercase">
-              Partner <span className="text-brand-primary">in</span> Thinking
-            </div>
-            <div className="flex gap-8">
-              <a href="https://blog.naver.com/yourthinkingpartner" target="_blank" rel="noopener noreferrer" className="text-xs uppercase tracking-widest opacity-60 hover:opacity-100">Naver Blog</a>
-              {!user && (
-                <button onClick={login} className="text-xs uppercase tracking-widest opacity-20 hover:opacity-100 transition-opacity">Admin</button>
-              )}
-            </div>
-            <p className="text-xs opacity-40">© 2026 Partner in Thinking. All rights reserved.</p>
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <button
+              onClick={() => handleOpenBooking()}
+              className="px-2.5 sm:px-4 py-2 sm:py-2.5 text-[11.5px] sm:text-[13.5px] font-semibold text-[#FAF6F0] bg-[#33261C] hover:bg-[#201710] active:scale-[0.98] rounded transition-all shadow-xs whitespace-nowrap cursor-pointer"
+            >
+              1:1 파트너십 시작하기
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+              aria-expanded={isMobileMenuOpen}
+              aria-label={isMobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
+              className="md:hidden w-9 h-9 rounded-md border border-[#DFD2BE] bg-[#F4ECE0]/70 hover:bg-[#EAE0D0] text-[#33261C] flex items-center justify-center transition-colors cursor-pointer"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
-        </footer>
-      </div>
-    </ErrorBoundary>
+        </div>
+
+        {/* Mobile Hamburger Dropdown Menu */}
+        {isMobileMenuOpen && (
+          <nav
+            aria-label="모바일 메뉴"
+            className="md:hidden border-t border-[#E8DFD3] bg-[#FAF6F0]/98 backdrop-blur-md shadow-lg"
+          >
+            <div className="max-w-6xl mx-auto px-4 py-3 space-y-1">
+              {NAV_ITEMS.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-3.5 py-2.5 rounded-lg hover:bg-[#EFE7DA] active:bg-[#E7DCCB] text-[15px] font-semibold text-[#221A14] transition-colors"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          </nav>
+        )}
+      </header>
+
+      {/* 2. HERO SECTION */}
+      <section id="home" className="scroll-mt-18 pt-14 pb-20 md:pt-20 md:pb-28 border-b border-[#E8DFD3]">
+        <div className="max-w-6xl mx-auto px-6">
+          {/* Top Title Group - Scaled for refined balance */}
+          <div className="mb-8 md:mb-12">
+            {/* Complexity to Clarity: Refined proportion */}
+            <div className="text-sm sm:text-base font-bold tracking-tight text-[#543E2C] mb-2.5">
+              Complexity to Clarity
+            </div>
+
+            {/* Main Headline: Balanced scale to harmonize with body text */}
+            <h1 className="text-2xl sm:text-[28px] lg:text-[32px] font-bold text-[#201812] leading-[1.38] tracking-tight">
+              생각의 무게에 눌려 더 이상 앞으로 나아가지 못할 때,
+              <br />
+              생각이 행동이 되도록 함께하는 Thinking Partner
+            </h1>
+          </div>
+
+          {/* 2-Column Split: Story & Workspace Visual */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+            {/* Left Column: Generous, readable body typography */}
+            <div className="lg:col-span-6 space-y-7">
+              {/* Body Text: Increased presence & comfortable line height */}
+              <div className="space-y-4 text-base sm:text-[17.5px] lg:text-[18.5px] text-[#45372C] leading-[1.85] font-normal">
+                <p>
+                  <span className="block">머릿속은 복잡한데 시작하지 못해 무기력해질 때,</span>
+                  <span className="block sm:pl-5 sm:-indent-5">
+                    쏟아지는 일들에 치여, 이대로 진짜 중요한 방향을{' '}
+                    <br className="hidden sm:inline" />
+                    잃어버리는 건 아닐지 불안해질 때,
+                  </span>
+                  <span className="block">혼자 하는 고민이 더 이상 답을 주지 못할 때,</span>
+                </p>
+                <p>
+                  혼자서는 제자리걸음이던 고민을 넘어,
+                  <br />
+                  세션이 끝난 뒤 당장 첫 번째 걸음을 내딛는 자신을 마주하게 됩니다.
+                </p>
+              </div>
+            </div>
+
+            {/* Right Column: Warm, Clarity-Inducing Desk Image */}
+            <div className="lg:col-span-6 flex flex-col items-center">
+              <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-[#E0D4C2] shadow-sm bg-white p-2">
+                <img
+                  src={heroWorkspaceImg}
+                  alt="A calm, warm desk with morning light, an open notebook and tea"
+                  className="w-full h-auto object-cover rounded-xl"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Hero Bottom CTA -> Scrolls to Contact Section */}
+          <div className="mt-12 md:mt-14 pt-8 border-t border-[#E6DCD0] flex flex-col md:flex-row md:items-center justify-between gap-5">
+            <p className="text-[15.5px] sm:text-[17px] font-medium text-[#342417] leading-relaxed">
+              &ldquo;완벽하게 정리된 고민이 아니어도 괜찮습니다. 편안한 첫 대화부터 가볍게 시작해 보세요.&rdquo;
+            </p>
+            <a
+              href="#contact"
+              className="px-6 py-3.5 text-sm sm:text-[15px] font-semibold text-[#FAF6F0] bg-[#33261C] hover:bg-[#201710] active:scale-[0.98] rounded transition-all shadow-xs inline-flex items-center justify-center gap-2 group shrink-0"
+            >
+              <span>첫 번째 생각 정리 대화 신청하기</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. PROGRAMS SECTION */}
+      <section id="programs" className="scroll-mt-18 py-20 md:py-28 bg-[#F0E7D8] border-b border-[#DFD2BD]">
+        <div className="max-w-6xl mx-auto px-6">
+          {/* Section Header: Left aligned to match site layout */}
+          <div className="max-w-3xl mb-10 text-left">
+            <span className="text-[11px] font-semibold text-[#7A6451] tracking-[0.2em] uppercase block mb-3">
+              PROGRAMS
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-[#201812] leading-[1.36] tracking-tight mb-3">
+              지금 가장 우선적으로 해결하고
+              <br />
+              싶은 머릿속 고민은 무엇인가요?
+            </h2>
+            <p className="text-base sm:text-[17px] text-[#524133] leading-relaxed">
+              누구나 마주할 수 있는 대표적인 머릿속 복잡함입니다.
+              <br className="hidden sm:inline" /> 모든 과정은 1:1 맞춤형으로 설계되며, 부담 없는 1회 단기 세션부터 장기 파트너십까지 유연하게 선택하실 수 있습니다.
+            </p>
+          </div>
+
+          {/* Program Items */}
+          <div className="space-y-4">
+            {PROGRAMS.map((prog) => (
+              <div
+                key={prog.id}
+                className="pt-8 sm:pt-10 pb-6 sm:pb-8 border-t border-[#DFD2BD] flex flex-col md:flex-row items-start gap-6 md:gap-8"
+              >
+                {/* Geometric Themed Thumbnail */}
+                <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-2xl overflow-hidden shrink-0 border border-[#D4C3AA] shadow-2xs bg-[#E6D9C5]">
+                  <img
+                    src={prog.image}
+                    alt={prog.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                {/* Content Area */}
+                <div className="flex-1 min-w-0 space-y-3">
+                  {/* Title & English Subtitle */}
+                  <div className="flex flex-wrap items-baseline gap-2.5">
+                    <h3 className="text-lg sm:text-xl font-bold text-[#201812] tracking-tight">
+                      {prog.title}
+                    </h3>
+                    <span className="text-xs sm:text-sm font-medium text-[#7A6451]">
+                      {prog.subtitleEn}
+                    </span>
+                  </div>
+
+                  {/* 2-Column Dilemma Quote & Resolution */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-8 pt-1">
+                    {/* Left: Dilemma Quote */}
+                    <div className="lg:col-span-5">
+                      <p className="text-[14.5px] sm:text-[15.5px] font-semibold text-[#342417] leading-relaxed">
+                        &ldquo;{prog.quote}&rdquo;
+                      </p>
+                    </div>
+
+                    {/* Right: Value / Transformation Description */}
+                    <div className="lg:col-span-7">
+                      <p className="text-[13.5px] sm:text-[14.5px] text-[#524133] leading-[1.85]">
+                        {prog.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Program Bottom CTA -> Opens 1:1 Booking Popup */}
+          <div className="mt-10 sm:mt-12 p-6 sm:p-8 rounded-2xl bg-[#FAF6F0] border border-[#DFD2BD] shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <p className="text-[15px] sm:text-[16.5px] text-[#342417] leading-[1.75] font-medium max-w-2xl">
+              어디서부터 이야기해야 할지 막막하신가요? 정기적인 코칭이 아니더라도 괜찮습니다.
+              <br className="hidden sm:inline" /> 지금 당장 머릿속을 어지럽히는 한 가지 주제를 가지고 1회 생각 정리 세션(60분 / 8만 원, VAT 포함)으로 먼저 가볍게 만나보세요.
+            </p>
+            <button
+              type="button"
+              onClick={() => handleOpenBooking()}
+              className="px-6 py-3.5 text-sm sm:text-[15px] font-semibold text-[#FAF6F0] bg-[#33261C] hover:bg-[#201710] active:scale-[0.98] rounded transition-all shadow-xs inline-flex items-center justify-center gap-2 group shrink-0 cursor-pointer"
+            >
+              <span>1회 생각 정리 세션 신청하기</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. CREDENTIALS SECTION: PROFESSIONAL FOUNDATION (Rich Warm Oak / Timber Tone) */}
+      <section id="credentials" className="scroll-mt-18 py-20 md:py-28 bg-[#EADBCA] border-b border-[#D4BF9E]">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
+            {/* Left Column: Title & Philosophy Statement */}
+            <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-28">
+              <span className="text-[11px] font-semibold text-[#7A5F45] tracking-[0.2em] uppercase block">
+                CREDENTIALS
+              </span>
+
+              <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-[#201812] leading-[1.25] tracking-tight">
+                Professional
+                <br />
+                Foundation
+              </h2>
+
+              <div className="space-y-4 text-[13.5px] sm:text-sm text-[#544131] leading-[1.8] pt-2">
+                <p>
+                  &ldquo;저는 정답을 제시하기 위해 이 자리에 있는 것이 아닙니다.
+                  <br />
+                  당신이 가장 중요한 결정을 내려야 하는 순간,
+                  <br />
+                  결코 혼자 고민하지 않도록 함께 합니다.
+                </p>
+                <p>
+                  당신의 &apos;Thinking Partner&apos;로서, 당신만의 방식으로
+                  <br />
+                  더 나은 선택을 할 수 있는 명확한 시야를 찾도록 돕습니다.&rdquo;
+                </p>
+              </div>
+
+              <div className="w-12 h-px bg-[#CBB494]" />
+
+              {/* Subtle Portrait for Trust & Human Presence */}
+              <div className="pt-2">
+                <div className="w-44 sm:w-48 lg:w-52 aspect-square rounded-xl overflow-hidden border border-[#CBB494]/90 bg-[#F4ECE0]/70 p-1.5 shadow-2xs">
+                  <img
+                    src="/assets/aistudio/____________da75ab76.png"
+                    alt="Partner in Thinking 프로필"
+                    className="w-full h-full object-cover object-top rounded-lg"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Experience, Certifications, Academics */}
+            <div className="lg:col-span-7 space-y-12">
+              {/* 1. Professional Experience */}
+              <div>
+                <span className="text-[11px] font-semibold text-[#7A5F45] tracking-[0.2em] uppercase block mb-3">
+                  PROFESSIONAL EXPERIENCE
+                </span>
+                <div className="pl-4 border-l-2 border-[#8E6E4D] space-y-3">
+                  <h3 className="text-sm sm:text-base font-bold text-[#201812]">
+                    인사이트, 브랜드, 전략, 리더십에 기반한 23년의 단단한 전문 경력
+                  </h3>
+                  <p className="text-[13.5px] sm:text-sm text-[#483729] leading-[1.8]">
+                    생명과학, 소비재, 의료, 식음료 등 각 산업 분야의 외국계 기업들을 거치며 비즈니스의 본질을 마주하고 실효성 있는 해법을 도출해 왔습니다. 그 과정에서 글로벌 기업의 Internal Advisor 임원으로서 조직의 핵심 의사결정을 지원하며 전략적 실행력을 확립했습니다.
+                  </p>
+                  <p className="text-[13.5px] sm:text-sm text-[#483729] leading-[1.8]">
+                    지금은 Independent Thinking Partner로서 복잡함 속에 갇힌 개인과 조직에게 선명한 질서를 함께 만들어가고 있습니다. 모호한 상황을 확신 있는 의사결정과 정교한 실행 체계로 전환하는 것, 그것이 Thinking Partner가 추구하는 핵심 가치입니다.
+                  </p>
+                </div>
+              </div>
+
+              {/* 2. Professional Certification */}
+              <div>
+                <span className="text-[11px] font-semibold text-[#7A5F45] tracking-[0.2em] uppercase block mb-3">
+                  PROFESSIONAL CERTIFICATION
+                </span>
+                <ul className="space-y-2.5 text-[13px] sm:text-sm text-[#241A13]">
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#8E6E4D] shrink-0" />
+                    <span>Certified Associate Coach (KAC)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#8E6E4D] shrink-0" />
+                    <span>Certified Birkman® (The Birkman Method)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#8E6E4D] shrink-0" />
+                    <span>Certified TKI® (Thomas-Kilmann Conflict Mode Instrument)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#8E6E4D] shrink-0" />
+                    <span>Certified FIRO-B® (Fundamental Interpersonal Relations Orientation - Behavior)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#8E6E4D] shrink-0" />
+                    <span>Certified Problem Solving Process Advanced Practitioner</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#8E6E4D] shrink-0" />
+                    <span>Certified Leader Championship Orientation Trainer</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#8E6E4D] shrink-0" />
+                    <span>Certified Training &amp; Facilitation Techniques for Instructors Trainer</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#8E6E4D] shrink-0" />
+                    <span>Certified Green Belt, and more</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* 3. Academic Background */}
+              <div>
+                <span className="text-[11px] font-semibold text-[#7A5F45] tracking-[0.2em] uppercase block mb-3">
+                  ACADEMIC BACKGROUND
+                </span>
+                <div className="space-y-2.5 text-[13px] sm:text-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span className="font-medium text-[#241A13]">Bachelor of Architecture</span>
+                    <span className="font-semibold text-[#524133] tracking-wider text-[11px] sm:text-xs uppercase">SEOUL NATIONAL UNIVERSITY</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span className="font-medium text-[#241A13]">M.S. in Engineering &amp; Project Management</span>
+                    <span className="font-semibold text-[#524133] tracking-wider text-[11px] sm:text-xs uppercase">UC BERKELEY</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span className="font-medium text-[#241A13]">B.A. in Psychology</span>
+                    <span className="font-semibold text-[#524133] tracking-wider text-[11px] sm:text-xs uppercase">CHUNG-ANG UNIVERSITY</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. STORIES SECTION (CLIENT TESTIMONIAL POST-IT BOARD) */}
+      <section id="stories" className="scroll-mt-18 py-20 md:py-28 bg-[#F5EEE4] border-b border-[#E2D5C3] overflow-hidden">
+        <div className="max-w-6xl mx-auto px-6">
+          {/* Section Header */}
+          <div className="max-w-3xl mb-12 text-left">
+            <span className="text-[11px] font-semibold text-[#7A6451] tracking-[0.2em] uppercase block mb-3">
+              STORIES
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-[#201812] leading-[1.36] tracking-tight mb-3">
+              대화가 끝난 후 일어난
+              <br />
+              생각과 행동의 선명한 변화
+            </h2>
+            <p className="text-base sm:text-[17px] text-[#524133] leading-relaxed">
+              머릿속이 엉켜 멈춰있던 고민이 어떻게 명확한 실행으로 전환되었는지,
+              <br />
+              Thinking Partner 세션을 경험한 분들의 실제 기록입니다.
+            </p>
+          </div>
+
+          {/* Post-it / Sticky Note Testimonial Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch pt-2">
+            {/* Post-it 1 (Top-Left): Warm Butter Note (선택 & 집중 - 외국계 기업 세일즈 상무) */}
+            <div className="relative group bg-[#FFFDEB] p-6 sm:p-7 rounded-sm border border-[#EDE2BA] shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rotate-[-0.7deg] hover:rotate-0 flex flex-col justify-between">
+              {/* Semi-transparent washi tape accent */}
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-4 bg-amber-100/75 border border-amber-200/60 shadow-2xs rotate-[1.5deg]" />
+
+              <div className="space-y-4">
+                <div className="pb-3 border-b border-[#E8DAAA]/60">
+                  <span className="text-[11px] font-bold text-[#8A6A32] tracking-wider uppercase">
+                    선택 &amp; 집중
+                  </span>
+                </div>
+
+                <div className="space-y-3.5 text-[13px] sm:text-[14px] leading-[1.75]">
+                  <div>
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E8DCBE] text-[#5C421A] mr-1.5 mb-1">
+                      BEFORE
+                    </span>
+                    <p className="text-[#59442B] font-medium">
+                      &ldquo;직장에서의 커리어 개발과 삶에서 해야 한다고 생각하는 일들이 뒤엉켜, 무엇부터 발걸음을 시작해야 할지 막막했습니다.&rdquo;
+                    </p>
+                  </div>
+
+                  <div className="pt-1">
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#755928] text-[#FFFBEB] mr-1.5 mb-1">
+                      AFTER
+                    </span>
+                    <p className="text-[#2B1F0E] font-semibold leading-relaxed">
+                      &ldquo;세션 이후 무엇이 중요한지 우선순위가 명확해졌고, 하나씩 실천하며 막막했던 일들을 이미 주도적으로 해내고 있습니다.&rdquo;
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 mt-5 border-t border-[#E8DAAA]/50 text-xs sm:text-[12.5px] text-[#7A6038]">
+                <span className="font-bold text-[#3B2912]">외국계 기업 세일즈 상무</span>
+              </div>
+            </div>
+
+            {/* Post-it 2 (Top-Center): Pale Muted Sage (내면 질서 & 번아웃 - 스타트업 창업 준비) */}
+            <div className="relative group bg-[#F5F8F1] p-6 sm:p-7 rounded-sm border border-[#DDE5D4] shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rotate-[0.5deg] hover:rotate-0 flex flex-col justify-between">
+              {/* Semi-transparent washi tape accent */}
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-4 bg-stone-200/75 border border-stone-300/60 shadow-2xs rotate-[2deg]" />
+
+              <div className="space-y-4">
+                <div className="pb-3 border-b border-[#D2DDC8]/60">
+                  <span className="text-[11px] font-bold text-[#55694A] tracking-wider uppercase">
+                    내면 질서 &amp; 번아웃
+                  </span>
+                </div>
+
+                <div className="space-y-3.5 text-[13px] sm:text-[14px] leading-[1.75]">
+                  <div>
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#D7E2D0] text-[#36492B] mr-1.5 mb-1">
+                      BEFORE
+                    </span>
+                    <p className="text-[#43523A] font-medium">
+                      &ldquo;오랜 불안과 트라우마 속에 갇혀, 새로운 시작을 앞두고도 과거의 경험에 발목이 잡혀 있었습니다.&rdquo;
+                    </p>
+                  </div>
+
+                  <div className="pt-1">
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#4B5E41] text-[#F5F8F1] mr-1.5 mb-1">
+                      AFTER
+                    </span>
+                    <p className="text-[#192413] font-semibold leading-relaxed">
+                      &ldquo;깊은 공감과 통찰 있는 질문 덕분에 걱정의 실체를 깨닫고, 과거의 경험을 새로운 도전을 위한 발판으로 전환했습니다.&rdquo;
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 mt-5 border-t border-[#D2DDC8]/50 text-xs sm:text-[12.5px] text-[#55694B]">
+                <span className="font-bold text-[#1E2916]">스타트업 창업 준비</span>
+              </div>
+            </div>
+
+            {/* Post-it 3 (Top-Right): Warm Sandalwood / Chai Paper (삶의 방향 & 전환 - 학원 원장) */}
+            <div className="relative group bg-[#FAF4EB] p-6 sm:p-7 rounded-sm border border-[#E7D8C2] shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rotate-[-0.6deg] hover:rotate-0 flex flex-col justify-between">
+              {/* Semi-transparent washi tape accent */}
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-4 bg-amber-100/75 border border-amber-200/60 shadow-2xs rotate-[-1deg]" />
+
+              <div className="space-y-4">
+                <div className="pb-3 border-b border-[#DFCEB7]/60">
+                  <span className="text-[11px] font-bold text-[#7A5B3D] tracking-wider uppercase">
+                    삶의 방향 &amp; 전환
+                  </span>
+                </div>
+
+                <div className="space-y-3.5 text-[13px] sm:text-[14px] leading-[1.75]">
+                  <div>
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E2CEB4] text-[#4A321B] mr-1.5 mb-1">
+                      BEFORE
+                    </span>
+                    <p className="text-[#59422C] font-medium">
+                      &ldquo;현실적인 사업의 양적 성장과 지향점 사이에서 괴리가 생기며, 복잡한 생각들로 방향을 잃고 있었습니다.&rdquo;
+                    </p>
+                  </div>
+
+                  <div className="pt-1">
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#6B4B29] text-[#FAF3E8] mr-1.5 mb-1">
+                      AFTER
+                    </span>
+                    <p className="text-[#26170A] font-semibold leading-relaxed">
+                      &ldquo;머릿속의 생각들을 꺼내어 본질적인 삶의 가치와 비교·정렬하자, 당장 집중해야 할 것과 나중으로 미룰 것이 명확해졌습니다. 이제 선명해진 기준을 바탕으로 차근차근 성과를 만들어가고 있습니다.&rdquo;
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 mt-5 border-t border-[#DFCEB7]/50 text-xs sm:text-[12.5px] text-[#78593A]">
+                <span className="font-bold text-[#36210F]">학원 원장 (사업 3년 차)</span>
+              </div>
+            </div>
+
+            {/* Post-it 4 (Bottom-Left): Soft Warm Peach Note (삶의 방향 & 전환 - 대기업 20년 차 팀장) */}
+            <div className="relative group bg-[#FDF5F0] p-6 sm:p-7 rounded-sm border border-[#ECD9CE] shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rotate-[0.8deg] hover:rotate-0 flex flex-col justify-between">
+              {/* Semi-transparent washi tape accent */}
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-4 bg-amber-100/75 border border-amber-200/60 shadow-2xs rotate-[-1.5deg]" />
+
+              <div className="space-y-4">
+                <div className="pb-3 border-b border-[#E3CEC1]/60">
+                  <span className="text-[11px] font-bold text-[#825442] tracking-wider uppercase">
+                    삶의 방향 &amp; 전환
+                  </span>
+                </div>
+
+                <div className="space-y-3.5 text-[13px] sm:text-[14px] leading-[1.75]">
+                  <div>
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E8D0C3] text-[#522919] mr-1.5 mb-1">
+                      BEFORE
+                    </span>
+                    <p className="text-[#5B3E32] font-medium">
+                      &ldquo;당면한 문제를 단편적으로만 바라보며, 복잡한 과제 앞에서 스스로의 기준을 찾지 못하고 헤매고 있었습니다.&rdquo;
+                    </p>
+                  </div>
+
+                  <div className="pt-1">
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#784632] text-[#FDF5F0] mr-1.5 mb-1">
+                      AFTER
+                    </span>
+                    <p className="text-[#2C150C] font-semibold leading-relaxed">
+                      &ldquo;존재 자체에 대한 깊은 성찰을 통해, 세션이 끝난 이후에도 스스로 주도적으로 문제를 해결할 명확한 기준을 얻었습니다.&rdquo;
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 mt-5 border-t border-[#E3CEC1]/50 text-xs sm:text-[12.5px] text-[#7C5241]">
+                <span className="font-bold text-[#3A1B10]">대기업 20년 차 팀장</span>
+              </div>
+            </div>
+
+            {/* Post-it 5 (Bottom-Center): Warm Linen / Kraft Paper (관계 & 소통 - 글로벌 기업 임원) */}
+            <div className="relative group bg-[#FAF3E8] p-6 sm:p-7 rounded-sm border border-[#E5D7C2] shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rotate-[-0.5deg] hover:rotate-0 flex flex-col justify-between">
+              {/* Semi-transparent washi tape accent */}
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-4 bg-amber-100/75 border border-amber-200/60 shadow-2xs rotate-[1deg]" />
+
+              <div className="space-y-4">
+                <div className="pb-3 border-b border-[#DFCEB7]/60">
+                  <span className="text-[11px] font-bold text-[#7A5B3D] tracking-wider uppercase">
+                    관계 &amp; 소통
+                  </span>
+                </div>
+
+                <div className="space-y-3.5 text-[13px] sm:text-[14px] leading-[1.75]">
+                  <div>
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E2CEB4] text-[#4A321B] mr-1.5 mb-1">
+                      BEFORE
+                    </span>
+                    <p className="text-[#59422C] font-medium">
+                      &ldquo;조직 내 인간관계와 팀 운영 과제 앞에서 감정적으로 소모되며 리더로서의 자신감을 잃고 있었습니다.&rdquo;
+                    </p>
+                  </div>
+
+                  <div className="pt-1">
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#6B4B29] text-[#FAF3E8] mr-1.5 mb-1">
+                      AFTER
+                    </span>
+                    <p className="text-[#26170A] font-semibold leading-relaxed">
+                      &ldquo;감정을 걷어내고 대화의 구조를 객관화하자, 솔직한 피드백과 함께 팀 전체의 신뢰가 다시 살아났습니다.&rdquo;
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 mt-5 border-t border-[#DFCEB7]/50 text-xs sm:text-[12.5px] text-[#78593A]">
+                <span className="font-bold text-[#36210F]">글로벌 기업 임원</span>
+              </div>
+            </div>
+
+            {/* Post-it 6 (Bottom-Right): Customizable Placeholder Slot (Completes 2x3 grid) */}
+            <div className="relative group bg-[#FAF6EE]/80 border-2 border-dashed border-[#D5C6AF] p-6 sm:p-7 rounded-sm flex flex-col items-center justify-center text-center rotate-[0.6deg] hover:rotate-0 hover:bg-[#FAF6EE] transition-all min-h-[250px]">
+              <div className="w-10 h-10 rounded-full bg-[#EDE2D0] text-[#7A6451] flex items-center justify-center mb-3">
+                <span className="text-xl font-light leading-none">+</span>
+              </div>
+              <h4 className="text-sm sm:text-[15px] font-bold text-[#45372C] mb-1.5">
+                당신의 변화가 기록될 차례입니다
+              </h4>
+              <p className="text-xs text-[#7A6755] leading-relaxed max-w-[240px]">
+                복잡했던 머릿속 매듭을 풀고, 선명해진 첫 걸음을 함께 시작합니다.
+              </p>
+              <button
+                onClick={() => handleOpenBooking()}
+                className="mt-4 px-5 py-2 text-xs font-semibold text-[#FAF6F0] bg-[#33261C] hover:bg-[#201710] rounded transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5 group"
+              >
+                <span>1:1 파트너십 시작하기</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. APPROACH SECTION: APPROACH OF PARTNER IN THINKING */}
+      <section id="approach" className="scroll-mt-18 py-20 md:py-28 bg-[#EDE3D2] border-b border-[#D8C7B0]">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
+            {/* Left Column: Editorial Headline & Stance */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="space-y-3">
+                <span className="text-[11px] font-semibold text-[#7A6451] tracking-[0.2em] uppercase block">
+                  APPROACH
+                </span>
+                <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-[#201812] leading-[1.25] tracking-tight whitespace-nowrap">
+                  Complexity to Clarity
+                </h2>
+              </div>
+
+              <p className="text-base sm:text-[18px] text-[#544335] font-normal leading-relaxed">
+                당신의 사고 파트너로서
+                <br />
+                당신만의 가치와 기준으로 생각을 정리하도록 함께합니다.
+              </p>
+            </div>
+
+            {/* Right Column: Lead Statement + 4 Pillars Grid */}
+            <div className="lg:col-span-7 space-y-9">
+              {/* Lead Paragraphs */}
+              <div className="space-y-4">
+                <p className="text-xl sm:text-2xl lg:text-[23px] text-[#241A14] font-medium leading-[1.55]">
+                  어떤 순간에는 혼자만으로는 삶의 무게가 버겁게 느껴질 때가 있습니다.
+                </p>
+
+                <p className="text-base sm:text-[17px] text-[#503F31] leading-[1.85]">
+                  당신의 <strong className="font-semibold text-[#241A14]">Thinking Partner</strong>로서 사고를 구조화하고 실행 가능한 명확함을 만듭니다.
+                  <br />
+                  내면의 질서를 정돈하며 지속 가능한 균형을 함께 회복합니다.
+                </p>
+              </div>
+
+              {/* 4 Pillars (2x2 Grid) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-8 pt-6 border-t border-[#D2C0A7]">
+                {/* 1. Critical Framing */}
+                <div>
+                  <div className="w-10 h-10 rounded-full bg-[#E1D0B8] border border-[#CCB998] text-[#402F21] flex items-center justify-center mb-3">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-[17px] sm:text-[18px] font-bold text-[#241A14] mb-2">
+                    Critical Framing
+                  </h3>
+                  <p className="text-[15px] sm:text-[16px] text-[#5A493B] leading-[1.8]">
+                    복잡한 상황의 본질을 정의하고, 해결해야 할 핵심 문제를 선명하게 만듭니다.
+                  </p>
+                </div>
+
+                {/* 2. Actionable Focus */}
+                <div>
+                  <div className="w-10 h-10 rounded-full bg-[#E1D0B8] border border-[#CCB998] text-[#402F21] flex items-center justify-center mb-3">
+                    <Target className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-[17px] sm:text-[18px] font-bold text-[#241A14] mb-2">
+                    Actionable Focus
+                  </h3>
+                  <p className="text-[15px] sm:text-[16px] text-[#5A493B] leading-[1.8]">
+                    한정된 에너지를 가장 중요한 과제에 정렬하여 실질적인 실행력을 높입니다.
+                  </p>
+                </div>
+
+                {/* 3. Inner Order */}
+                <div>
+                  <div className="w-10 h-10 rounded-full bg-[#E1D0B8] border border-[#CCB998] text-[#402F21] flex items-center justify-center mb-3">
+                    <Scale className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-[17px] sm:text-[18px] font-bold text-[#241A14] mb-2">
+                    Inner Order
+                  </h3>
+                  <p className="text-[15px] sm:text-[16px] text-[#5A493B] leading-[1.8]">
+                    내면의 충돌과 사고 패턴을 객관화하여 실행을 가로막는 심리적 장벽을 해소합니다.
+                  </p>
+                </div>
+
+                {/* 4. Relational Balance */}
+                <div>
+                  <div className="w-10 h-10 rounded-full bg-[#E1D0B8] border border-[#CCB998] text-[#402F21] flex items-center justify-center mb-3">
+                    <Shield className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-[17px] sm:text-[18px] font-bold text-[#241A14] mb-2">
+                    Relational Balance
+                  </h3>
+                  <p className="text-[15px] sm:text-[16px] text-[#5A493B] leading-[1.8]">
+                    관계 속의 사고 구조를 파악하여 조직과 개인의 지속 가능한 조화를 이룹니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. INSIGHT SECTION */}
+      <section id="insight" className="scroll-mt-18 py-20 md:py-28 bg-[#FAF6F0] border-b border-[#E8DFD3]">
+        <div className="max-w-6xl mx-auto px-6">
+          {/* Header with Top-Right Blog Link */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div className="max-w-3xl text-left">
+              <span className="text-[11px] font-semibold text-[#7A6451] tracking-[0.2em] uppercase block mb-3">
+                INSIGHT
+              </span>
+              <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-[#201812] leading-[1.36] tracking-tight mb-3">
+                생각의 실타래를 푸는 관점과 글
+              </h2>
+              <p className="text-base sm:text-[17px] text-[#524133] leading-relaxed">
+                복잡한 상황을 단순하게 바라보고 실행으로 전환하기 위해 나눈 Thinking Partner의 기록입니다. 네이버 블로그에서 더 깊은 사유와 다양한 인사이트를 만나보세요.
+              </p>
+            </div>
+
+            <a
+              href="https://blog.naver.com/yourthinkingpartner"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-5 py-2.5 text-xs sm:text-sm font-semibold text-[#FAF6F0] bg-[#33261C] hover:bg-[#201710] active:scale-[0.98] rounded transition-all shadow-xs flex items-center gap-1.5 shrink-0 self-start md:self-end whitespace-nowrap group"
+            >
+              <span>더 많은 글 읽어보기</span>
+              <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </a>
+          </div>
+
+          {/* 4 Articles Grid (2x2) - Uniform card dimensions and matched box heights */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            {INSIGHTS.map((post, idx) => (
+              <a
+                key={idx}
+                href={post.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group p-6 sm:p-8 bg-[#F2E8D9] hover:bg-white rounded-xl border border-[#DFD1BD] hover:border-[#BFA88A] shadow-2xs hover:shadow-xs transition-all duration-200 h-full min-h-[116px] sm:min-h-[128px] flex items-center justify-between gap-6"
+              >
+                <h3 className="text-base sm:text-[17.5px] font-bold text-[#241A14] group-hover:text-[#4A3728] transition-colors leading-[1.6]">
+                  {post.title}
+                </h3>
+                <div className="w-9 h-9 rounded-full bg-[#E2D2BC] group-hover:bg-[#33261C] text-[#594433] group-hover:text-[#FAF6F0] flex items-center justify-center shrink-0 transition-all duration-200">
+                  <ArrowUpRight className="w-4 h-4 sm:w-4.5 sm:h-4.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 7. FOOTER / CONTACT SECTION (Deep Espresso Walnut Wood) */}
+      <footer id="contact" className="scroll-mt-18 bg-[#1F1813] text-[#EDE4DA] pt-20 pb-16">
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <div className="max-w-3xl mx-auto mb-14">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-tight mb-5">
+              {/* Mobile Line Breaks */}
+              <span className="sm:hidden">
+                생각만 많아지고
+                <br />
+                행동은 멈춰있다면,
+                <br />
+                이제 변화를 위한 첫 걸음을
+                <br />
+                시작할 시간입니다.
+              </span>
+              {/* PC / Tablet Line Breaks */}
+              <span className="hidden sm:inline">
+                생각만 많아지고 행동은 멈춰 있다면,
+                <br />
+                이제 변화를 위한 첫 걸음을 시작할 시간입니다.
+              </span>
+            </h2>
+            <p className="text-sm sm:text-base text-[#CFC2B4] leading-relaxed mb-8">
+              {/* Mobile Line Breaks */}
+              <span className="sm:hidden">
+                얽힌 생각을 구조화하고 당장 실천할 수 있는
+                <br />
+                명확한 답을 함께 찾아갑니다.
+                <br />
+                혼자 하던 고민을 실행으로 바꾸는 대화를
+                <br />
+                지금 시작해 보세요.
+              </span>
+              {/* PC / Tablet Line Breaks */}
+              <span className="hidden sm:inline">
+                얽힌 생각을 구조화하고 당장 실천할 수 있는 명확한 답을 함께 찾아갑니다.
+                <br />
+                혼자 하던 고민을 실행으로 바꾸는 대화를 지금 시작해 보세요.
+              </span>
+            </p>
+
+            <button
+              onClick={() => handleOpenBooking()}
+              className="px-8 py-4 text-sm font-bold text-[#1F1813] bg-[#E8DCC9] hover:bg-white active:scale-[0.98] rounded transition-all shadow-md inline-flex items-center gap-2 group"
+            >
+              <span>1:1 파트너십 시작하기</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+
+            {/* Direct Contact Points */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs sm:text-sm text-[#C4B4A2]">
+              <a
+                href="tel:+82-10-8330-1149"
+                className="hover:text-white transition-colors flex items-center gap-2"
+              >
+                <Phone className="w-4 h-4 text-[#D4C3AF]" />
+                <span>+82-10-8330-1149</span>
+              </a>
+              <span className="text-[#524133] hidden sm:inline">·</span>
+              <a
+                href="mailto:hello.partnerinthinking@gmail.com"
+                className="hover:text-white transition-colors flex items-center gap-2"
+              >
+                <Mail className="w-4 h-4 text-[#D4C3AF]" />
+                <span>hello.partnerinthinking@gmail.com</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Session Format & Confidentiality Assurance */}
+          <div className="py-4 px-6 bg-[#2B211A] rounded-lg border border-[#3E3026] inline-flex items-center gap-3 text-xs text-[#E5DCD2] mb-12">
+            <ShieldCheck className="w-4 h-4 text-[#D4B594] shrink-0" />
+            <span>
+              오프라인 세션 (서울 강남) 및 온라인 화상 세션 모두 가능하며, 모든 세션의 내용은 100% 기밀이 보장됩니다.
+            </span>
+          </div>
+
+          {/* Footer Bottom Brand Logo & Admin Access (Balanced Single Brand Title) */}
+          <div className="pt-10 border-t border-[#362A22] flex flex-col sm:flex-row items-center justify-between gap-5 text-xs text-[#9E8B7A]">
+            <a
+              href="#"
+              className="text-sm sm:text-base font-bold tracking-[0.2em] uppercase text-white hover:opacity-90 transition-opacity whitespace-nowrap select-none"
+            >
+              PARTNER <span className="font-normal text-[#B8A492]">IN</span> THINKING
+            </a>
+
+            <div className="flex items-center gap-3 text-[11.5px] text-[#8E7C6E]">
+              <span>© All rights reserved.</span>
+              <span className="text-[#4A3B31]">·</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthError(null);
+                  setIsAdminOpen(true);
+                }}
+                className="px-2.5 py-1 rounded bg-[#2B211A] hover:bg-[#382B22] border border-[#3E3026] text-[#9E8B7A] hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                aria-label="Admin"
+              >
+                <Lock className="w-3 h-3 text-[#9E8B7A]" />
+                <span className="font-medium">Admin</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* 8. MODAL: 1:1 BOOKING & CONSULTATION INTAKE */}
+      {isModalOpen && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+        >
+          <div className="bg-[#FCFBF8] w-full max-w-xl rounded-2xl border border-[#E3D8C8] shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+            <div className="px-6 sm:px-7 py-5 bg-[#F4ECE0] border-b border-[#E4D7C5] flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="text-lg sm:text-xl font-bold text-[#201812] tracking-tight">
+                  1:1 파트너십 대화 신청
+                </h3>
+                <p className="text-[13.5px] sm:text-sm text-[#6E5948] mt-0.5 leading-relaxed">
+                  머릿속의 혼란을 정리하고 첫 매듭을 함께 찾습니다.
+                  <br />
+                  (1회 세션 60분 / 8만 원, VAT 포함)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6E5948] hover:text-[#201812] hover:bg-[#E7DAC7] transition-colors cursor-pointer"
+                aria-label="닫기"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {isSubmitted && lastBooking ? (
+              <div className="p-6 sm:p-8 overflow-y-auto space-y-6">
+                <div className="text-center">
+                  <div className="w-14 h-14 bg-[#E5D7C3] text-[#33261C] rounded-full flex items-center justify-center mx-auto mb-3.5 shadow-inner">
+                    <Check className="w-7 h-7 stroke-[2.5]" />
+                  </div>
+                  <h4 className="text-xl font-bold text-[#201812] mb-1.5">
+                    신청이 성공적으로 접수되었습니다.
+                  </h4>
+                  <p className="text-sm text-[#524133] leading-relaxed">
+                    작성하신 신청 내용이 안전하게 접수되었습니다.
+                    <br />
+                    확인 후 입력하신 연락처 또는 이메일로 답변드리겠습니다.
+                  </p>
+                </div>
+
+                {/* Submitted Summary Card */}
+                <div className="p-5 bg-[#F4ECE0]/80 rounded-xl border border-[#DFD2BD] text-sm space-y-2.5 text-[#423225]">
+                  <div className="flex justify-between gap-4 pb-2 border-b border-[#D8C7B2]">
+                    <span className="font-semibold text-[#6E5948] shrink-0">성함</span>
+                    <span className="font-bold text-[#241A13] text-right">{lastBooking.name}</span>
+                  </div>
+                  <div className="flex justify-between gap-4 pb-2 border-b border-[#D8C7B2]">
+                    <span className="font-semibold text-[#6E5948] shrink-0">연락처</span>
+                    <span className="font-bold text-[#241A13] text-right">{lastBooking.contact}</span>
+                  </div>
+                  <div className="flex justify-between gap-4 pb-2 border-b border-[#D8C7B2]">
+                    <span className="font-semibold text-[#6E5948] shrink-0">이메일</span>
+                    <span className="font-bold text-[#241A13] text-right break-all">{lastBooking.email}</span>
+                  </div>
+                  <div className="flex justify-between gap-4 pb-2 border-b border-[#D8C7B2]">
+                    <span className="font-semibold text-[#6E5948] shrink-0">관심 프로그램</span>
+                    <span className="font-bold text-[#241A13] text-right">{lastBooking.programTitle}</span>
+                  </div>
+                  <div className="pt-1">
+                    <span className="block font-semibold text-[#6E5948] mb-1.5">메시지</span>
+                    <p className="p-3 bg-white/90 rounded-lg border border-[#E0D4C2] text-[#342417] leading-relaxed">
+                      &ldquo;{lastBooking.dilemma}&rdquo;
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="w-full py-3.5 text-[15px] font-bold text-white bg-[#33261C] hover:bg-[#201710] active:scale-[0.99] rounded-xl transition-all shadow-xs cursor-pointer"
+                  >
+                    닫기
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitBooking} className="p-6 sm:p-7 space-y-5 overflow-y-auto">
+                {/* Row 1: 이름 & 연락처 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[14px] font-bold text-[#2E2218] mb-2">
+                      이름 <span className="text-[#8E4B32]">*</span>
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      value={formName}
+                      onChange={(e) => setFormName(e.target.value)}
+                      placeholder="성함을 입력해 주세요"
+                      className="w-full px-4 py-3.5 text-[15px] bg-[#F3EFE9] border border-transparent focus:border-[#A8927B] focus:bg-white rounded-xl focus:outline-none text-[#241A13] placeholder:text-[#9A8B7C] transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[14px] font-bold text-[#2E2218] mb-2">
+                      연락처 <span className="text-[#8E4B32]">*</span>
+                    </label>
+                    <input
+                      required
+                      type="tel"
+                      value={formContact}
+                      onChange={(e) => setFormContact(e.target.value)}
+                      placeholder="010-0000-0000"
+                      className="w-full px-4 py-3.5 text-[15px] bg-[#F3EFE9] border border-transparent focus:border-[#A8927B] focus:bg-white rounded-xl focus:outline-none text-[#241A13] placeholder:text-[#9A8B7C] transition-colors"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 2: 이메일 */}
+                <div>
+                  <label className="block text-[14px] font-bold text-[#2E2218] mb-2">
+                    이메일 <span className="text-[#8E4B32]">*</span>
+                  </label>
+                  <input
+                    required
+                    type="email"
+                    value={formEmail}
+                    onChange={(e) => setFormEmail(e.target.value)}
+                    placeholder="답변 및 일정 안내를 받으실 이메일 주소"
+                    className="w-full px-4 py-3.5 text-[15px] bg-[#F3EFE9] border border-transparent focus:border-[#A8927B] focus:bg-white rounded-xl focus:outline-none text-[#241A13] placeholder:text-[#9A8B7C] transition-colors"
+                  />
+                </div>
+
+                {/* Row 3: 관심 프로그램 (중복 선택 가능 드롭다운) */}
+                <div ref={programDropdownRef} className="relative">
+                  <label className="block text-[14px] font-bold text-[#2E2218] mb-2">
+                    관심 프로그램 <span className="text-[12.5px] font-normal text-[#7A6451]">(선택 사항)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsProgramDropdownOpen((prev) => !prev)}
+                    className={`w-full px-4 py-3.5 text-[15px] bg-[#F3EFE9] border rounded-xl text-left flex items-center justify-between gap-3 transition-colors cursor-pointer ${
+                      isProgramDropdownOpen
+                        ? 'border-[#A8927B] bg-white'
+                        : 'border-transparent hover:bg-[#EDE7DE]'
+                    }`}
+                  >
+                    <span
+                      className={`truncate ${
+                        selectedPrograms.length > 0
+                          ? 'text-[#241A13] font-medium'
+                          : 'text-[#9A8B7C]'
+                      }`}
+                    >
+                      {selectedPrograms.length > 0
+                        ? selectedPrograms
+                            .map((id) => PROGRAM_OPTIONS.find((opt) => opt.id === id)?.label)
+                            .filter(Boolean)
+                            .join(', ')
+                        : '관심 있는 프로그램을 선택해 주세요 (중복 선택 가능)'}
+                    </span>
+                    <ChevronDown
+                      className={`w-5 h-5 text-[#7A6451] shrink-0 transition-transform ${
+                        isProgramDropdownOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {isProgramDropdownOpen && (
+                    <div className="mt-2 p-2 bg-white border border-[#DFD2BE] rounded-xl shadow-lg space-y-1">
+                      {PROGRAM_OPTIONS.map((option) => {
+                        const isChecked = selectedPrograms.includes(option.id);
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => toggleProgramSelection(option.id)}
+                            className={`w-full px-3.5 py-2.5 rounded-lg text-left text-[14.5px] flex items-center gap-3 transition-colors cursor-pointer ${
+                              isChecked
+                                ? 'bg-[#F4ECE0] text-[#201812] font-semibold'
+                                : 'text-[#45372C] hover:bg-[#FAF6F0]'
+                            }`}
+                          >
+                            <span
+                              className={`w-4.5 h-4.5 rounded flex items-center justify-center border shrink-0 transition-colors ${
+                                isChecked
+                                  ? 'bg-[#33261C] border-[#33261C] text-white'
+                                  : 'bg-white border-[#CBBAA4]'
+                              }`}
+                            >
+                              {isChecked && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                            </span>
+                            <span>{option.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Row 4: 메시지 */}
+                <div>
+                  <label className="block text-[14px] font-bold text-[#2E2218] mb-2">
+                    메시지 <span className="text-[#8E4B32]">*</span>
+                  </label>
+                  <textarea
+                    rows={5}
+                    required
+                    value={formDilemma}
+                    onChange={(e) => setFormDilemma(e.target.value)}
+                    placeholder={
+                      '함께 생각해 보고 싶은 주제나 고민을 적어주세요.\n예: 너무 많은 생각으로 겪는 결정의 어려움, 커리어 전환을 앞두고 정리되지 않는 고민, 혹은 팀 운영에서 겪는 소통의 어려움 등을 편하게 적어주세요.'
+                    }
+                    className="w-full px-4 py-3.5 text-[15px] bg-[#F3EFE9] border border-transparent focus:border-[#A8927B] focus:bg-white rounded-xl focus:outline-none text-[#241A13] placeholder:text-[#9A8B7C] leading-relaxed transition-colors resize-none"
+                  />
+                </div>
+
+                <div className="p-3.5 bg-[#F4ECE0] rounded-xl border border-[#E4D7C5] text-[13px] text-[#5C4A3B] leading-relaxed">
+                  🔒 입력하신 모든 정보는 파트너 외에 누구에게도 공개되지 않습니다. 신청서를 남겨주시면 확인 후 세션 일정 조율 및 결제 안내(네이버페이 가능)를 보내드립니다.
+                </div>
+
+                {submitError && (
+                  <div className="p-3.5 bg-red-50 rounded-xl border border-red-200 text-[13px] text-red-800 leading-relaxed">
+                    {submitError}
+                  </div>
+                )}
+
+                <div className="pt-1">
+                  <button
+                    type="submit"
+                    disabled={isSubmittingBooking}
+                    className="w-full py-3.5 text-[15px] sm:text-base font-bold text-white bg-[#33261C] hover:bg-[#201710] disabled:opacity-60 active:scale-[0.99] rounded-xl transition-all shadow-xs cursor-pointer"
+                  >
+                    {isSubmittingBooking ? '신청 접수 중...' : '첫 대화 예약 신청하기'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 9. MODAL: ADMIN DASHBOARD (Authenticated Admin Only) */}
+      {isAdminOpen && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsAdminOpen(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+        >
+          {!isAdmin ? (
+            <div className="bg-[#FAF7F2] w-full max-w-md rounded-2xl border border-[#DFD3C0] shadow-2xl overflow-hidden">
+              <div className="px-6 py-4 bg-[#231A14] text-[#EDE4DA] flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Lock className="w-4 h-4 text-[#D4B594]" />
+                  <h3 className="text-base font-bold text-white">Admin</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAdminOpen(false)}
+                  className="w-8 h-8 rounded flex items-center justify-center text-[#C4B4A2] hover:text-white hover:bg-[#3A2D23] transition-colors cursor-pointer"
+                  aria-label="닫기"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 sm:p-7 space-y-5 text-center">
+                {!isAuthReady ? (
+                  <p className="text-sm text-[#5C4A3B] py-4">인증 상태를 확인하고 있습니다...</p>
+                ) : authUser ? (
+                  <>
+                    <div className="w-12 h-12 rounded-full bg-red-100 text-red-700 flex items-center justify-center mx-auto">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <h4 className="text-base font-bold text-[#201812]">
+                        접근 권한이 없습니다
+                      </h4>
+                      <p className="text-xs sm:text-[13px] text-[#5C4A3B] leading-relaxed">
+                        현재 로그인된 계정(<span className="font-semibold">{authUser.email}</span>)에는 관리자 권한이 없습니다.
+                        <br />
+                        지정된 관리자 Google 계정으로 로그인해 주세요.
+                      </p>
+                    </div>
+
+                    {authError && (
+                      <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-2.5">
+                        {authError}
+                      </p>
+                    )}
+
+                    <div className="space-y-2.5 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleSwitchAdminAccount}
+                        disabled={isSigningIn}
+                        className="w-full py-3 px-4 text-sm font-bold text-white bg-[#33261C] hover:bg-[#201710] disabled:opacity-60 rounded-xl transition-colors cursor-pointer"
+                      >
+                        {isSigningIn ? '로그인 중...' : '다른 Google 계정으로 로그인'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAdminSignOut}
+                        className="w-full py-2.5 px-4 text-xs font-semibold text-[#5C4A3B] hover:text-[#201812] hover:bg-[#EDE4D6] rounded-xl transition-colors cursor-pointer"
+                      >
+                        로그아웃
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-12 h-12 rounded-full bg-[#EDE2D2] text-[#33261C] flex items-center justify-center mx-auto">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <h4 className="text-base font-bold text-[#201812]">
+                        관리자 인증이 필요합니다
+                      </h4>
+                      <p className="text-xs sm:text-[13px] text-[#5C4A3B] leading-relaxed">
+                        지정된 관리자 Google 계정으로 로그인한 경우에만 접근할 수 있습니다.
+                      </p>
+                    </div>
+
+                    {authError && (
+                      <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-2.5">
+                        {authError}
+                      </p>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleAdminSignIn}
+                      disabled={isSigningIn}
+                      className="w-full py-3 px-4 text-sm font-bold text-white bg-[#33261C] hover:bg-[#201710] disabled:opacity-60 rounded-xl transition-colors cursor-pointer"
+                    >
+                      {isSigningIn ? '로그인 창 여는 중...' : 'Google 계정으로 로그인'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+          <div className="bg-[#FAF7F2] w-full max-w-4xl rounded-xl border border-[#DFD3C0] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Admin Header */}
+            <div className="px-6 py-4 bg-[#231A14] text-[#EDE4DA] flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#3A2D23] border border-[#524133] flex items-center justify-center text-[#E8DCC9]">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-white">
+                      1:1 파트너십 신청 관리
+                    </h3>
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-[#8E6E4D] text-white">
+                      Admin
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#BCAAA0]">
+                    로그인: {authUser?.email} · 총 {bookings.length}건
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {adminTab === 'bookings' && (
+                  <button
+                    onClick={handleExportCSV}
+                    className="px-3 py-1.5 text-xs font-semibold text-[#241A14] bg-[#E8DCC9] hover:bg-white rounded transition-colors flex items-center gap-1.5 cursor-pointer"
+                    title="신청 내역을 엑셀(CSV) 파일로 저장합니다"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">CSV 다운로드</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleAdminSignOut}
+                  className="px-2.5 py-1.5 text-xs font-medium text-[#E8DCC9] hover:text-white bg-[#3A2D23] hover:bg-[#4A3B30] rounded transition-colors flex items-center gap-1 cursor-pointer"
+                  title="로그아웃"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">로그아웃</span>
+                </button>
+                <button
+                  onClick={() => setIsAdminOpen(false)}
+                  className="w-8 h-8 rounded flex items-center justify-center text-[#C4B4A2] hover:text-white hover:bg-[#3A2D23] transition-colors cursor-pointer"
+                  aria-label="닫기"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Admin Header Navigation Tabs */}
+            <div className="px-6 pt-2 bg-[#231A14] border-t border-[#3A2D23] flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setAdminTab('bookings')}
+                className={`px-4 py-2 text-xs font-bold rounded-t-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
+                  adminTab === 'bookings'
+                    ? 'bg-[#F0E7D8] text-[#241A14]'
+                    : 'text-[#C4B4A2] hover:text-white hover:bg-[#34271D]'
+                }`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>신청 내역 관리 ({bookings.length})</span>
+              </button>
+              <button
+                onClick={() => setAdminTab('sns')}
+                className={`px-4 py-2 text-xs font-bold rounded-t-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
+                  adminTab === 'sns'
+                    ? 'bg-[#F0E7D8] text-[#241A14]'
+                    : 'text-[#C4B4A2] hover:text-white hover:bg-[#34271D]'
+                }`}
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>SNS 썸네일 &amp; 메타태그 미리보기</span>
+              </button>
+            </div>
+
+            {/* TAB 1: BOOKINGS LIST */}
+            {adminTab === 'bookings' ? (
+              <>
+                {/* Admin Filter & Search Bar */}
+                <div className="p-4 bg-[#F0E7D8] border-b border-[#DFD1BD] flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+                  {/* Status Filter Tabs */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
+                    <button
+                      onClick={() => setAdminStatusFilter('all')}
+                      className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
+                        adminStatusFilter === 'all'
+                          ? 'bg-[#33261C] text-[#FAF6F0]'
+                          : 'bg-white/70 text-[#5C4A3B] hover:bg-white'
+                      }`}
+                    >
+                      전체 ({bookings.length})
+                    </button>
+                    <button
+                      onClick={() => setAdminStatusFilter('pending')}
+                      className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
+                        adminStatusFilter === 'pending'
+                          ? 'bg-[#8E6E4D] text-white'
+                          : 'bg-white/70 text-[#5C4A3B] hover:bg-white'
+                      }`}
+                    >
+                      대기중 ({bookings.filter((b) => b.status === 'pending').length})
+                    </button>
+                    <button
+                      onClick={() => setAdminStatusFilter('contacted')}
+                      className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
+                        adminStatusFilter === 'contacted'
+                          ? 'bg-[#405436] text-white'
+                          : 'bg-white/70 text-[#5C4A3B] hover:bg-white'
+                      }`}
+                    >
+                      연락완료 ({bookings.filter((b) => b.status === 'contacted').length})
+                    </button>
+                    <button
+                      onClick={() => setAdminStatusFilter('confirmed')}
+                      className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
+                        adminStatusFilter === 'confirmed'
+                          ? 'bg-[#2A4365] text-white'
+                          : 'bg-white/70 text-[#5C4A3B] hover:bg-white'
+                      }`}
+                    >
+                      세션확정 ({bookings.filter((b) => b.status === 'confirmed').length})
+                    </button>
+                  </div>
+
+                  {/* Search input */}
+                  <div className="relative w-full sm:w-64">
+                    <input
+                      type="text"
+                      placeholder="이름, 연락처, 고민 검색..."
+                      value={adminSearchQuery}
+                      onChange={(e) => setAdminSearchQuery(e.target.value)}
+                      className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#D5C7B3] rounded focus:outline-none focus:border-[#5C4533] text-[#241A13]"
+                    />
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8A7563]">
+                      🔍
+                    </span>
+                  </div>
+                </div>
+
+                {/* Bookings List Area */}
+                <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
+                  {filteredBookings.length === 0 ? (
+                    <div className="text-center py-16 bg-white/60 rounded-xl border border-dashed border-[#D5C7B3]">
+                      <MessageSquare className="w-10 h-10 text-[#BCAAA0] mx-auto mb-2" />
+                      <p className="text-sm font-bold text-[#5C4A3B]">해당 조건의 신청 내역이 없습니다.</p>
+                      <p className="text-xs text-[#8A7563] mt-1">
+                        고객이 1:1 파트너십을 신청하면 이곳에 즉시 실시간으로 등록됩니다.
+                      </p>
+                    </div>
+                  ) : (
+                    filteredBookings.map((b) => (
+                      <div
+                        key={b.id}
+                        className="p-5 bg-white rounded-xl border border-[#DFD1BD] shadow-xs hover:border-[#BFA88A] transition-all space-y-3"
+                      >
+                        {/* Top Row: Meta & Status Selector */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#F0E7D8]">
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-sm sm:text-base text-[#241A14]">
+                              {b.name}
+                            </span>
+                            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#EDE2D2] text-[#5C421A]">
+                              {b.programTitle}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {/* Status selector */}
+                            <select
+                              value={b.status}
+                              onChange={(e) =>
+                                handleUpdateStatus(b.id, e.target.value as BookingRecord['status'])
+                              }
+                              className={`text-xs font-semibold px-2.5 py-1 rounded border outline-none cursor-pointer ${
+                                b.status === 'pending'
+                                  ? 'bg-amber-50 text-amber-900 border-amber-300'
+                                  : b.status === 'contacted'
+                                  ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                                  : b.status === 'confirmed'
+                                  ? 'bg-blue-50 text-blue-900 border-blue-300'
+                                  : 'bg-stone-100 text-stone-700 border-stone-300'
+                              }`}
+                            >
+                              <option value="pending">⏳ 대기중</option>
+                              <option value="contacted">📞 연락완료</option>
+                              <option value="confirmed">✅ 세션확정</option>
+                              <option value="cancelled">🚫 취소/보류</option>
+                            </select>
+
+                            {/* Inline Delete confirmation */}
+                            {confirmDeleteId === b.id ? (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteBooking(b.id)}
+                                  className="px-2 py-1 text-[11px] font-bold bg-red-600 hover:bg-red-700 text-white rounded cursor-pointer"
+                                >
+                                  삭제 확인
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteId(null)}
+                                  className="px-2 py-1 text-[11px] font-medium bg-[#EDE4D6] hover:bg-[#DFD2BE] text-[#33261C] rounded cursor-pointer"
+                                >
+                                  취소
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteId(b.id)}
+                                className="p-1 text-[#A8988A] hover:text-red-700 transition-colors cursor-pointer"
+                                title="신청 내역 삭제"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Middle: Dilemma text */}
+                        <div className="p-3 bg-[#FAF6F0] rounded-lg border border-[#EDE2D2]">
+                          <span className="text-[10px] font-bold text-[#8A7563] uppercase tracking-wider block mb-1">
+                            고민 내용
+                          </span>
+                          <p className="text-xs sm:text-[13px] text-[#332417] leading-relaxed whitespace-pre-wrap">
+                            {b.dilemma}
+                          </p>
+                        </div>
+
+                        {/* Bottom Row: Contact & Actions */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 text-xs text-[#6E5948]">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span className="flex items-center gap-1 text-[#8A7563]">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>{b.createdAt}</span>
+                            </span>
+                            <span>·</span>
+                            <span className="font-semibold text-[#241A14]">
+                              {b.contact}
+                            </span>
+                            {b.email && (
+                              <>
+                                <span>·</span>
+                                <span className="font-medium text-[#524133]">
+                                  {b.email}
+                                </span>
+                              </>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {/* Direct phone call if contact contains numbers */}
+                            {/\d/.test(b.contact) && (
+                              <a
+                                href={`tel:${b.contact.replace(/[^\d]/g, '')}`}
+                                className="px-3 py-1 rounded bg-[#F0E7D8] hover:bg-[#E2D2BD] text-[#33261C] font-semibold transition-colors flex items-center gap-1.5"
+                              >
+                                <Phone className="w-3.5 h-3.5" />
+                                <span>전화 걸기</span>
+                              </a>
+                            )}
+
+                            {/* Direct email reply */}
+                            <a
+                              href={`mailto:${b.email || b.contact}?subject=${encodeURIComponent(
+                                `[PARTNER IN THINKING] ${b.name}님, 신청해주신 1:1 세션 일정 조율 안내입니다.`
+                              )}`}
+                              className="px-3 py-1 rounded bg-[#F0E7D8] hover:bg-[#E2D2BD] text-[#33261C] font-semibold transition-colors flex items-center gap-1.5"
+                            >
+                              <Mail className="w-3.5 h-3.5" />
+                              <span>메일 답장</span>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            ) : (
+              /* TAB 2: SNS THUMBNAIL & OG META PREVIEW */
+              <div className="p-6 overflow-y-auto flex-1 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  {/* Left Column: Visual Card Preview matching user attachment */}
+                  <div className="lg:col-span-6 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#5C4533] uppercase tracking-wider">
+                        📱 SNS 링크 공유 카드 미리보기
+                      </span>
+                      <span className="text-[11px] text-[#8E7660]">
+                        카카오톡 / iMessage / 페이스북 / 슬랙
+                      </span>
+                    </div>
+
+                    {/* Actual Card Simulation */}
+                    <div className="bg-[#FAF6F0] rounded-xl border border-[#DFD2BE] shadow-md overflow-hidden max-w-sm mx-auto">
+                      {/* Thumbnail Image */}
+                      <div className="relative aspect-[982/507] bg-[#F7F3EB] overflow-hidden border-b border-[#E2D5C3]">
+                        <img
+                          src="/og-image.png"
+                          alt="PARTNER IN THINKING SNS Thumbnail"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      {/* Card Content Area */}
+                      <div className="p-4 bg-white space-y-1.5">
+                        <h4 className="text-[15px] font-bold text-[#1F1813] tracking-tight leading-snug">
+                          Complexity to Clarity
+                        </h4>
+                        <p className="text-xs text-[#524133] leading-relaxed line-clamp-2">
+                          복잡한 세상 속, 얽힌 머릿속과 마음을 체계적으로 구조화하는 생각 파트너
+                        </p>
+                        <span className="text-[11px] text-[#8E7660] font-medium block pt-1">
+                          www.partnerinthinking.com
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11.5px] text-[#7A6451] text-center leading-relaxed pt-1">
+                      💡 링크 전송 시 첨부해주신 <strong>PARTNER IN THINKING</strong> 썸네일 이미지와
+                      지정 텍스트가 위와 같이 깔끔하게 표시됩니다.
+                    </p>
+                  </div>
+
+                  {/* Right Column: Code Snippet & Instructions */}
+                  <div className="lg:col-span-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#5C4533] uppercase tracking-wider">
+                        💻 사이트 헤더에 적용된 메타태그
+                      </span>
+                      <button
+                        onClick={handleCopySnsSnippet}
+                        className="px-2.5 py-1 text-xs font-semibold rounded bg-[#33261C] hover:bg-[#201710] text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        {copiedCode ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>복사 완료!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>코드 복사</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Preformatted Code Block */}
+                    <div className="p-3.5 bg-[#1C1611] text-[#E0D7CD] rounded-lg border border-[#3A2D23] font-mono text-[11px] leading-relaxed overflow-x-auto max-h-[280px]">
+                      <pre>
+{`<!-- OpenGraph SNS Meta Tags -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="PARTNER IN THINKING" />
+<meta property="og:title" content="Complexity to Clarity" />
+<meta property="og:description" content="복잡한 세상 속, 얽힌 머릿속과 마음을 체계적으로 구조화하는 생각 파트너" />
+<meta property="og:url" content="https://www.partnerinthinking.com" />
+<meta property="og:image" content="https://www.partnerinthinking.com/og-image.png" />
+<meta property="og:image:width" content="982" />
+<meta property="og:image:height" content="507" />
+<meta property="og:locale" content="ko_KR" />
+
+<!-- Twitter / X Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Complexity to Clarity" />
+<meta name="twitter:description" content="복잡한 세상 속, 얽힌 머릿속과 마음을 체계적으로 구조화하는 생각 파트너" />
+<meta name="twitter:image" content="https://www.partnerinthinking.com/og-image.png" />`}
+                      </pre>
+                    </div>
+
+                    {/* Guide for Social Cache Clearing */}
+                    <div className="p-3 bg-[#FAF6EE] rounded-lg border border-[#E0D4C2] text-xs text-[#524133] space-y-1.5">
+                      <span className="font-bold text-[#3B2D22] block">
+                        🔍 SNS 캐시 갱신 안내
+                      </span>
+                      <p className="text-[11.5px] leading-relaxed">
+                        카카오톡이나 페이스북에서 이전 썸네일이 계속 보일 경우 각 플랫폼의 캐시 초기화 도구(카카오 디벨로퍼스 OG 캐시 삭제 / 페이스북 공유 디버거)를 통해 즉시 새 썸네일로 갱신할 수 있습니다.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Admin Footer Information */}
+            <div className="px-6 py-3 bg-[#F0E7D8] border-t border-[#DFD1BD] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[#6E5948] shrink-0">
+              <span>
+                💡 모든 접수 데이터는 Firebase에 암호화 저장되며, 관리자 계정({ADMIN_EMAIL})으로 로그인한 경우에만 열람할 수 있습니다.
+              </span>
+              <a
+                href="mailto:hello.partnerinthinking@gmail.com"
+                className="font-bold text-[#33261C] hover:underline"
+              >
+                hello.partnerinthinking@gmail.com
+              </a>
+            </div>
+          </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

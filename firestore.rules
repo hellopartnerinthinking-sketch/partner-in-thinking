@@ -1,47 +1,97 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper Functions
-    function isAuthenticated() {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reusable hardened helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
       return request.auth != null;
     }
 
+    // Strict Admin Gate: ONLY verified Google account hello.partnerinthinking@gmail.com
     function isAdmin() {
-      return isAuthenticated() && (
-        request.auth.token.email.lower() == "wonyoung.park@gmail.com"
-      );
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'hello.partnerinthinking@gmail.com';
     }
 
-    function isValidPost(data) {
-      return data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
-             data.content is string && data.content.size() > 0 && data.content.size() < 50000 &&
-             data.slug is string && data.slug.size() > 0 && data.slug.size() < 100;
+    // Booking schema validation helper (matches firebase-blueprint.json constraints)
+    function isValidBooking(data) {
+      return data.keys().hasAll([
+          'name',
+          'contact',
+          'email',
+          'programId',
+          'programTitle',
+          'dilemma',
+          'status',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'name',
+          'contact',
+          'email',
+          'programId',
+          'programTitle',
+          'dilemma',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+        && data.contact is string && data.contact.size() >= 1 && data.contact.size() <= 40
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 120
+        && data.programId is string && data.programId.size() >= 1 && data.programId.size() <= 120
+        && data.programTitle is string && data.programTitle.size() >= 1 && data.programTitle.size() <= 200
+        && data.dilemma is string && data.dilemma.size() >= 1 && data.dilemma.size() <= 3000
+        && data.status is string && data.status in ['pending', 'contacted', 'confirmed', 'cancelled']
+        && data.createdAt is timestamp
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 
-    function isValidMessage(data) {
-      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.message is string && data.message.size() > 0 && data.message.size() < 5000;
-    }
+    // Bookings Collection:
+    // - Public visitors can submit (create) a validated pending booking without reading anyone else's data.
+    // - ONLY verified Admin (hello.partnerinthinking@gmail.com) can get, list, update status, or delete bookings.
+    match /bookings/{bookingId} {
+      allow get: if isValidId(bookingId) && isAdmin();
+      allow list: if isAdmin();
 
-    // Rules
-    match /posts/{postId} {
-      allow read: if true;
-      allow write: if isAdmin() && isValidPost(request.resource.data);
-    }
+      allow create: if isValidId(bookingId)
+        && isValidBooking(incoming())
+        && incoming().status == 'pending'
+        && incoming().createdAt == request.time
+        && (!('updatedAt' in incoming()) || incoming().updatedAt == request.time);
 
-    match /credentials/{credId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
+      allow update: if isValidId(bookingId)
+        && isAdmin()
+        && isValidBooking(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && incoming().name == existing().name
+        && incoming().contact == existing().contact
+        && incoming().email == existing().email
+        && incoming().programId == existing().programId
+        && incoming().programTitle == existing().programTitle
+        && incoming().dilemma == existing().dilemma
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time;
 
-    match /messages/{msgId} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
-    }
-
-    match /settings/{settingId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow delete: if isValidId(bookingId) && isAdmin();
     }
   }
 }

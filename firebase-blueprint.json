@@ -1,74 +1,79 @@
 {
   "entities": {
-    "Post": {
-      "title": "Blog Post",
-      "description": "A thinking piece or insight shared by the partner.",
+    "Booking": {
+      "title": "Booking",
+      "description": "1:1 파트너십 대화 신청 내역",
       "type": "object",
       "properties": {
-        "title": { "type": "string", "description": "The title of the post" },
-        "content": { "type": "string", "description": "Markdown content of the post" },
-        "excerpt": { "type": "string", "description": "Short summary for the list view" },
-        "category": { "type": "string", "description": "Category like Leadership, Strategy, etc." },
-        "imageUrl": { "type": "string", "description": "Header image URL" },
-        "publishedAt": { "type": "string", "format": "date-time", "description": "Publication date" },
-        "slug": { "type": "string", "description": "URL friendly identifier" }
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "신청자 성함"
+        },
+        "contact": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "description": "신청자 연락처"
+        },
+        "email": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 120,
+          "format": "email",
+          "description": "신청자 이메일 주소"
+        },
+        "programId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "선택한 관심 프로그램 ID 목록 (쉼표 구분 또는 none)"
+        },
+        "programTitle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "선택한 관심 프로그램 명칭 요약"
+        },
+        "dilemma": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 3000,
+          "description": "함께 이야기 나누고 싶은 주제 또는 고민"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "contacted", "confirmed", "cancelled"],
+          "description": "상담 진행 상태"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "신청 접수 일시 (서버 타임스탬프)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "상태 최종 변경 일시 (서버 타임스탬프)"
+        }
       },
-      "required": ["title", "content", "publishedAt", "slug"]
-    },
-    "Credential": {
-      "title": "Professional Credential",
-      "description": "A certification, degree, or professional achievement.",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "organization": { "type": "string" },
-        "year": { "type": "string" },
-        "order": { "type": "number" }
-      },
-      "required": ["title", "organization"]
-    },
-    "ContactMessage": {
-      "title": "Contact Form Submission",
-      "description": "Messages sent from the website contact form.",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "subject": { "type": "string" },
-        "message": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["name", "email", "message", "createdAt"]
-    },
-    "SiteSettings": {
-      "title": "Site Configuration",
-      "description": "Global settings for the website's appearance and content.",
-      "type": "object",
-      "properties": {
-        "heroTitle": { "type": "string" },
-        "heroSubtitle": { "type": "string" },
-        "aboutText": { "type": "string" },
-        "primaryColor": { "type": "string" },
-        "fontFamily": { "type": "string" }
-      }
+      "required": [
+        "name",
+        "contact",
+        "email",
+        "programId",
+        "programTitle",
+        "dilemma",
+        "status",
+        "createdAt"
+      ]
     }
   },
   "firestore": {
-    "posts": {
-      "schema": "Post",
-      "description": "Collection of blog posts"
-    },
-    "credentials": {
-      "schema": "Credential",
-      "description": "Collection of professional credentials"
-    },
-    "messages": {
-      "schema": "ContactMessage",
-      "description": "Collection of contact form submissions"
-    },
-    "settings": {
-      "schema": "SiteSettings",
-      "description": "Singleton-like collection for site settings"
+    "/bookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/Booking" },
+      "description": "1:1 파트너십 대화 신청 문서 컬렉션 (일반 방문자는 생성만 가능, 조회/수정/삭제는 관리자 계정만 허용)"
     }
   }
 }

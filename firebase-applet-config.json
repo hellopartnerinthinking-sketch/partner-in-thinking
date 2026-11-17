@@ -1,10 +1,12 @@
 {
-  "projectId": "gen-lang-client-0870906384",
-  "appId": "1:414569395035:web:a76da2dd69d4998f27607e",
-  "apiKey": "AIzaSyAZrUFBoS1Mze_d1hDL37oOqlzgZf6khjc",
-  "authDomain": "gen-lang-client-0870906384.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-2d9b0281-96d3-4f84-a0bc-92cc75d7d71d",
-  "storageBucket": "gen-lang-client-0870906384.firebasestorage.app",
-  "messagingSenderId": "414569395035",
-  "measurementId": ""
+  "projectId": "carbide-protocol-hkpm1",
+  "appId": "1:104964002130:web:e9c846f5b534aecd242a8b",
+  "apiKey": "AIzaSyAe9z7ohFaQoqm7FQ1QYQ-XDcAtR27PGWk",
+  "authDomain": "carbide-protocol-hkpm1.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-partnerinthinkin-0b04197c-ce92-4438-b0f0-69a8c593a5be",
+  "storageBucket": "carbide-protocol-hkpm1.firebasestorage.app",
+  "messagingSenderId": "104964002130",
+  "measurementId": "",
+  "oAuthClientId": "104964002130-1s8vv8fur5gjbm09upbphpm6his84vmg.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
 }
