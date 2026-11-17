@@ -85,8 +85,8 @@ const formatTimestamp = (value: unknown): string => {
 
 const PROGRAM_OPTIONS = [
   { id: 'decision', label: '선택 & 집중' },
-  { id: 'career', label: '삶의 방향 & 전환' },
   { id: 'mental', label: '내면 질서 & 번아웃' },
+  { id: 'career', label: '삶의 방향 & 전환' },
   { id: 'communication', label: '관계 & 소통' },
   { id: 'unsure', label: '아직 잘 모르겠음 (대화 중 함께 정리)' },
 ];
@@ -145,15 +145,6 @@ const PROGRAMS: ProgramItem[] = [
     image: photoChoicesFocus,
   },
   {
-    id: 'career',
-    title: '삶의 방향 & 전환',
-    subtitleEn: 'Life Direction & Next Chapter',
-    quote: '앞으로 나아가야 할 방향이 흐릿해지고, 삶의 새로운 전환점을 고민하게 될 때',
-    description:
-      '익숙한 자리를 넘어, 온전한 \'나\'로서의 고유한 가치와 기준을 재정의합니다. 불확실한 미래에 대한 막막함을 지우고, 주도적이고 선명한 삶의 다음 궤적을 함께 설계합니다.',
-    image: photoDirectionNext,
-  },
-  {
     id: 'mental',
     title: '내면 질서 & 번아웃',
     subtitleEn: 'Inner Order & Mental Reset',
@@ -161,6 +152,15 @@ const PROGRAMS: ProgramItem[] = [
     description:
       '과도한 고민과 누적된 피로로 사고가 멈출 때, 머릿속 안개를 걷어내고 내면의 질서를 회복합니다. 흩어진 마음을 정돈하여 흔들리지 않는 단단한 회복탄력성과 일상의 에너지를 되찾습니다.',
     image: photoInnerReset,
+  },
+  {
+    id: 'career',
+    title: '삶의 방향 & 전환',
+    subtitleEn: 'Life Direction & Next Chapter',
+    quote: '앞으로 나아가야 할 방향이 흐릿해지고, 삶의 새로운 전환점을 고민하게 될 때',
+    description:
+      '익숙한 자리를 넘어, 온전한 \'나\'로서의 고유한 가치와 기준을 재정의합니다. 불확실한 미래에 대한 막막함을 지우고, 주도적이고 선명한 삶의 다음 궤적을 함께 설계합니다.',
+    image: photoDirectionNext,
   },
   {
     id: 'communication',
