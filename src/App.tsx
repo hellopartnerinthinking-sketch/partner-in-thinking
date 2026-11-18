@@ -61,6 +61,12 @@ import photoDirectionNext from './assets/images/photo_direction_next_17943053236
 import photoInnerReset from './assets/images/photo_inner_reset_1794305306834.jpg';
 import photoRelationComm from './assets/images/photo_relation_comm_1794305291524.jpg';
 
+declare global {
+  interface Window {
+    gtag_report_conversion?: (url?: string) => boolean;
+  }
+}
+
 export interface BookingRecord {
   id: string;
   createdAt: string;
@@ -447,6 +453,10 @@ export default function App() {
       setLastBooking(newBooking);
       setIsProgramDropdownOpen(false);
       setIsSubmitted(true);
+
+      if (typeof window.gtag_report_conversion === 'function') {
+        window.gtag_report_conversion();
+      }
     } catch (error) {
       setSubmitError('신청 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
       handleFirestoreError(error, OperationType.CREATE, docPath);
