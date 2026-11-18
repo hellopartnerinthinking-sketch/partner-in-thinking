@@ -1353,15 +1353,7 @@ export default function App() {
             </button>
 
             {/* Direct Contact Points */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs sm:text-sm text-[#C4B4A2]">
-              <a
-                href="tel:+82-10-8330-1149"
-                className="hover:text-white transition-colors flex items-center gap-2"
-              >
-                <Phone className="w-4 h-4 text-[#D4C3AF]" />
-                <span>+82-10-8330-1149</span>
-              </a>
-              <span className="text-[#524133] hidden sm:inline">·</span>
+            <div className="mt-8 flex items-center justify-center text-xs sm:text-sm text-[#C4B4A2]">
               <a
                 href="mailto:hello.partnerinthinking@gmail.com"
                 className="hover:text-white transition-colors flex items-center gap-2"
